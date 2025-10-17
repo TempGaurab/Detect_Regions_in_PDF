@@ -1,0 +1,1 @@
+poppler_path=r"poppler-25.07.0/Library/bin"
