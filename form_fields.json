@@ -1,0 +1,9 @@
+{
+  "image": "form329.png",
+  "model": "naver-clova-ix/donut-base-finetuned-docvqa",
+  "fields": {
+    "input_lines": "version's mets level",
+    "checkboxes": "20",
+    "sections": "section xiv - mets testing"
+  }
+}
