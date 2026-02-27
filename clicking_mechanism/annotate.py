@@ -1,12 +1,13 @@
 """
 Region Annotation Tool
 ======================
-Annotate images by clicking to mark checkboxes and lines.
+Annotate images by clicking to mark checkboxes, lines, and form boxes.
 
 CONTROLS:
-  Left Click       → Add point (checkbox center OR line endpoint)
+  Left Click       → Add point / draw annotation
   C                → Switch to CHECKBOX mode
   L                → Switch to LINE mode
+  B                → Switch to BOX mode (click two corners)
   Z                → Undo last point
   D                → Delete a specific annotation (click near it after pressing D)
   S / Enter        → Save & move to next image
@@ -15,8 +16,11 @@ CONTROLS:
 LINE MODE:
   First click sets start point, second click sets end point → line is saved.
 
+BOX MODE:
+  First click sets one corner, second click sets opposite corner → box is saved.
 """
 
+#completed till 329.
 import os
 import sys
 import json
@@ -33,8 +37,9 @@ IMG_EXTS    = ('*.png', '*.jpg', '*.jpeg', '*.bmp', '*.tiff', '*.tif', '*.gif', 
 
 CHECKBOX_COLOR  = '#00FF00'   # green
 LINE_COLOR      = '#FF4444'   # red
-PENDING_COLOR   = '#FFFF00'   # yellow  (first click of a line, not confirmed yet)
-DELETE_COLOR    = '#FF8800'   # orange  (delete-mode highlight)
+BOX_COLOR       = '#44AAFF'   # blue
+PENDING_COLOR   = '#FFFF00'   # yellow
+DELETE_COLOR    = '#FF8800'   # orange
 POINT_RADIUS    = 6
 # ────────────────────────────────────────────────────────────────────────────
 
@@ -50,8 +55,12 @@ def gather_images(data_dir):
 def load_existing(json_path):
     if os.path.exists(json_path):
         with open(json_path) as f:
-            return json.load(f)
-    return {'checkboxes': [], 'lines': []}
+            data = json.load(f)
+            data.setdefault('checkboxes', [])
+            data.setdefault('lines', [])
+            data.setdefault('boxes', [])
+            return data
+    return {'checkboxes': [], 'lines': [], 'boxes': []}
 
 
 def save_annotations(json_path, data):
@@ -66,16 +75,13 @@ class AnnotationApp:
         self.images = images
         self.idx    = 0
 
-        # Annotation state
-        self.mode         = 'checkbox'   # 'checkbox' | 'line'
-        self.delete_mode  = False
-        self.line_start   = None         # pending first line click
+        self.mode        = 'checkbox'
+        self.delete_mode = False
+        self.first_point = None
 
-        # Per-image data
-        self.data         = {}           # checkboxes: [[x,y],...], lines: [[x1,y1,x2,y2],...]
-        self.canvas_items = []           # (canvas_id, type, index)
+        self.data         = {}
+        self.canvas_items = []
 
-        # Build UI
         self.root.title('Region Annotation Tool')
         self.root.configure(bg='#1e1e1e')
         self._build_ui()
@@ -92,32 +98,32 @@ class AnnotationApp:
         self.lbl_file.pack(side=tk.LEFT)
 
         self.lbl_mode = tk.Label(top, text='', bg='#1e1e1e', fg=CHECKBOX_COLOR,
-                                 font=('Courier', 12, 'bold'), width=30)
+                                 font=('Courier', 12, 'bold'), width=36)
         self.lbl_mode.pack(side=tk.RIGHT)
 
         self.canvas = tk.Canvas(self.root, cursor='crosshair', bg='#111')
         self.canvas.pack(fill=tk.BOTH, expand=True)
 
-        hint = ("[C] Checkbox  [L] Line  [Z] Undo  [D] Delete mode  "
-                "[S/Enter] Save & Next  [Q/Esc] Quit")
+        hint = ("[C] Checkbox  [L] Line  [B] Box  "
+                "[Z] Undo  [D] Delete  [S/Enter] Save & Next  [Q/Esc] Quit")
         tk.Label(self.root, text=hint, bg='#2a2a2a', fg='#aaa',
                  font=('Courier', 9)).pack(fill=tk.X)
 
     def _bind_keys(self):
-        self.root.bind('<c>', lambda e: self._set_mode('checkbox'))
-        self.root.bind('<C>', lambda e: self._set_mode('checkbox'))
-        self.root.bind('<l>', lambda e: self._set_mode('line'))
-        self.root.bind('<L>', lambda e: self._set_mode('line'))
-        self.root.bind('<z>', lambda e: self._undo())
-        self.root.bind('<Z>', lambda e: self._undo())
-        self.root.bind('<d>', lambda e: self._toggle_delete_mode())
-        self.root.bind('<D>', lambda e: self._toggle_delete_mode())
-        self.root.bind('<s>', lambda e: self._save_and_next())
-        self.root.bind('<S>', lambda e: self._save_and_next())
-        self.root.bind('<Return>', lambda e: self._save_and_next())
-        self.root.bind('<q>', lambda e: self._quit())
-        self.root.bind('<Q>', lambda e: self._quit())
-        self.root.bind('<Escape>', lambda e: self._quit())
+        for key in ('<c>', '<C>'):
+            self.root.bind(key, lambda e: self._set_mode('checkbox'))
+        for key in ('<l>', '<L>'):
+            self.root.bind(key, lambda e: self._set_mode('line'))
+        for key in ('<b>', '<B>'):
+            self.root.bind(key, lambda e: self._set_mode('box'))
+        for key in ('<z>', '<Z>'):
+            self.root.bind(key, lambda e: self._undo())
+        for key in ('<d>', '<D>'):
+            self.root.bind(key, lambda e: self._toggle_delete_mode())
+        for key in ('<s>', '<S>', '<Return>'):
+            self.root.bind(key, lambda e: self._save_and_next())
+        for key in ('<q>', '<Q>', '<Escape>'):
+            self.root.bind(key, lambda e: self._quit())
         self.canvas.bind('<Button-1>', self._on_click)
 
     # ── Image loading ────────────────────────────────────────────────────────
@@ -127,23 +133,21 @@ class AnnotationApp:
             self.root.quit()
             return
 
-        img_path = self.images[self.idx]
-        base     = os.path.splitext(os.path.basename(img_path))[0]
+        img_path  = self.images[self.idx]
+        base      = os.path.splitext(os.path.basename(img_path))[0]
         json_path = os.path.join(OUTPUT_DIR, base + '.json')
 
         self.current_img_path  = img_path
         self.current_json_path = json_path
         self.data              = load_existing(json_path)
-        self.line_start        = None
+        self.first_point       = None
         self.delete_mode       = False
 
-        # Load & display image
-        pil_img   = Image.open(img_path)
+        pil_img = Image.open(img_path)
         self.orig_w, self.orig_h = pil_img.size
 
-        # Fit to screen
         screen_w = self.root.winfo_screenwidth()  - 40
-        screen_h = self.root.winfo_screenheight() - 140
+        screen_h = self.root.winfo_screenheight() - 160
         scale    = min(screen_w / self.orig_w, screen_h / self.orig_h, 1.0)
         self.scale = scale
 
@@ -164,14 +168,14 @@ class AnnotationApp:
 
     # ── Mode helpers ─────────────────────────────────────────────────────────
     def _set_mode(self, mode):
-        self.mode       = mode
+        self.mode        = mode
         self.delete_mode = False
-        self.line_start  = None
+        self.first_point = None
         self._refresh_mode_label()
 
     def _toggle_delete_mode(self):
         self.delete_mode = not self.delete_mode
-        self.line_start  = None
+        self.first_point = None
         self._refresh_mode_label()
 
     def _refresh_mode_label(self):
@@ -179,11 +183,16 @@ class AnnotationApp:
             self.lbl_mode.config(text='MODE: DELETE (click near item)', fg=DELETE_COLOR)
         elif self.mode == 'checkbox':
             self.lbl_mode.config(text='MODE: CHECKBOX', fg=CHECKBOX_COLOR)
-        else:
-            if self.line_start:
+        elif self.mode == 'line':
+            if self.first_point:
                 self.lbl_mode.config(text='MODE: LINE  (click end point)', fg=PENDING_COLOR)
             else:
                 self.lbl_mode.config(text='MODE: LINE  (click start point)', fg=LINE_COLOR)
+        elif self.mode == 'box':
+            if self.first_point:
+                self.lbl_mode.config(text='MODE: BOX  (click opposite corner)', fg=PENDING_COLOR)
+            else:
+                self.lbl_mode.config(text='MODE: BOX  (click first corner)', fg=BOX_COLOR)
 
     # ── Canvas helpers ───────────────────────────────────────────────────────
     def _to_orig(self, cx, cy):
@@ -205,10 +214,20 @@ class AnnotationApp:
         r = POINT_RADIUS // 2
         self.canvas.create_line(cx1, cy1, cx2, cy2,
                                 fill=LINE_COLOR, width=2, tags='annotation')
-        self.canvas.create_oval(cx1-r, cy1-r, cx1+r, cy1+r,
-                                fill=LINE_COLOR, outline='white', tags='annotation')
-        self.canvas.create_oval(cx2-r, cy2-r, cx2+r, cy2+r,
-                                fill=LINE_COLOR, outline='white', tags='annotation')
+        for cx, cy in [(cx1, cy1), (cx2, cy2)]:
+            self.canvas.create_oval(cx-r, cy-r, cx+r, cy+r,
+                                    fill=LINE_COLOR, outline='white', tags='annotation')
+
+    def _draw_box(self, ox1, oy1, ox2, oy2):
+        cx1, cy1 = self._to_canvas(ox1, oy1)
+        cx2, cy2 = self._to_canvas(ox2, oy2)
+        self.canvas.create_rectangle(cx1, cy1, cx2, cy2,
+                                     outline=BOX_COLOR, width=2,
+                                     fill='', tags='annotation')
+        r = POINT_RADIUS // 2
+        for cx, cy in [(cx1, cy1), (cx2, cy2)]:
+            self.canvas.create_oval(cx-r, cy-r, cx+r, cy+r,
+                                    fill=BOX_COLOR, outline='white', tags='annotation')
 
     def _draw_pending(self, ox, oy):
         cx, cy = self._to_canvas(ox, oy)
@@ -223,8 +242,10 @@ class AnnotationApp:
             self._draw_checkbox(*cb)
         for ln in self.data['lines']:
             self._draw_line(*ln)
-        if self.line_start:
-            self._draw_pending(*self.line_start)
+        for bx in self.data['boxes']:
+            self._draw_box(*bx)
+        if self.first_point:
+            self._draw_pending(*self.first_point)
 
     # ── Click handler ────────────────────────────────────────────────────────
     def _on_click(self, event):
@@ -238,23 +259,24 @@ class AnnotationApp:
             self.data['checkboxes'].append([round(ox, 2), round(oy, 2)])
             self._redraw_all()
 
-        elif self.mode == 'line':
-            if self.line_start is None:
-                self.line_start = (round(ox, 2), round(oy, 2))
+        elif self.mode in ('line', 'box'):
+            if self.first_point is None:
+                self.first_point = (round(ox, 2), round(oy, 2))
                 self._refresh_mode_label()
                 self._redraw_all()
             else:
-                x1, y1 = self.line_start
+                x1, y1 = self.first_point
                 x2, y2 = round(ox, 2), round(oy, 2)
-                self.data['lines'].append([x1, y1, x2, y2])
-                self.line_start = None
+                key = 'lines' if self.mode == 'line' else 'boxes'
+                self.data[key].append([x1, y1, x2, y2])
+                self.first_point = None
                 self._refresh_mode_label()
                 self._redraw_all()
 
     # ── Undo ─────────────────────────────────────────────────────────────────
     def _undo(self):
-        if self.line_start:
-            self.line_start = None
+        if self.first_point:
+            self.first_point = None
             self._refresh_mode_label()
             self._redraw_all()
             return
@@ -262,6 +284,8 @@ class AnnotationApp:
             self.data['lines'].pop()
         elif self.mode == 'checkbox' and self.data['checkboxes']:
             self.data['checkboxes'].pop()
+        elif self.mode == 'box' and self.data['boxes']:
+            self.data['boxes'].pop()
         self._redraw_all()
 
     # ── Delete nearest ───────────────────────────────────────────────────────
@@ -273,20 +297,23 @@ class AnnotationApp:
         for i, cb in enumerate(self.data['checkboxes']):
             d = math.hypot(ox - cb[0], oy - cb[1])
             if d < best_dist:
-                best_dist, best_type, best_index = d, 'checkbox', i
+                best_dist, best_type, best_index = d, 'checkboxes', i
 
         for i, ln in enumerate(self.data['lines']):
             for px, py in [(ln[0], ln[1]), (ln[2], ln[3])]:
                 d = math.hypot(ox - px, oy - py)
                 if d < best_dist:
-                    best_dist, best_type, best_index = d, 'line', i
+                    best_dist, best_type, best_index = d, 'lines', i
 
-        threshold = 20 / self.scale   # 20 px tolerance
+        for i, bx in enumerate(self.data['boxes']):
+            for px, py in [(bx[0], bx[1]), (bx[2], bx[3])]:
+                d = math.hypot(ox - px, oy - py)
+                if d < best_dist:
+                    best_dist, best_type, best_index = d, 'boxes', i
+
+        threshold = 20 / self.scale
         if best_dist < threshold and best_index is not None:
-            if best_type == 'checkbox':
-                self.data['checkboxes'].pop(best_index)
-            else:
-                self.data['lines'].pop(best_index)
+            self.data[best_type].pop(best_index)
             self._redraw_all()
         else:
             messagebox.showwarning('Delete', 'No annotation found close enough to click.')
@@ -299,7 +326,8 @@ class AnnotationApp:
         save_annotations(self.current_json_path, self.data)
         print(f'Saved → {self.current_json_path}  '
               f'({len(self.data["checkboxes"])} checkboxes, '
-              f'{len(self.data["lines"])} lines)')
+              f'{len(self.data["lines"])} lines, '
+              f'{len(self.data["boxes"])} boxes)')
 
     def _save_and_next(self):
         self._save_current()
