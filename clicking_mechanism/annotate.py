@@ -1,359 +1,400 @@
-"""
-Region Annotation Tool
-======================
-Annotate images by clicking to mark checkboxes, lines, and form boxes.
-
-CONTROLS:
-  Left Click       → Add point / draw annotation
-  C                → Switch to CHECKBOX mode
-  L                → Switch to LINE mode
-  B                → Switch to BOX mode (click two corners)
-  Z                → Undo last point
-  D                → Delete a specific annotation (click near it after pressing D)
-  S / Enter        → Save & move to next image
-  Q / Escape       → Quit (saves current progress first)
-
-LINE MODE:
-  First click sets start point, second click sets end point → line is saved.
-
-BOX MODE:
-  First click sets one corner, second click sets opposite corner → box is saved.
-"""
-
-#completed till 329.
 import os
-import sys
 import json
-import math
-import glob
-import tkinter as tk
-from tkinter import messagebox
-from PIL import Image, ImageTk
+import cv2
+import numpy as np
+from PIL import Image
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
 
-# ── Config ──────────────────────────────────────────────────────────────────
-DATA_DIR    = os.path.join(os.path.dirname(__file__), '..', 'data')
-OUTPUT_DIR  = os.path.join(os.path.dirname(__file__), 'annotations')
-IMG_EXTS    = ('*.png', '*.jpg', '*.jpeg', '*.bmp', '*.tiff', '*.tif', '*.gif', '*.webp')
+# ─────────────────────────────────────────────
+# CONFIG
+# ─────────────────────────────────────────────
+SCRIPT_DIR  = os.path.dirname(os.path.abspath(__file__))
+DATA_FOLDER = os.path.join(SCRIPT_DIR, '..', 'data')
+OUTPUT_DIR  = os.path.join(SCRIPT_DIR, '..', 'clicking_mechanism', 'annotations', 'model_output')
 
-CHECKBOX_COLOR  = '#00FF00'   # green
-LINE_COLOR      = '#FF4444'   # red
-BOX_COLOR       = '#44AAFF'   # blue
-PENDING_COLOR   = '#FFFF00'   # yellow
-DELETE_COLOR    = '#FF8800'   # orange
-POINT_RADIUS    = 6
-# ────────────────────────────────────────────────────────────────────────────
+IMAGE_NAME  = "form2.png"   # ← change as needed
+IMAGE_PATH  = os.path.join(DATA_FOLDER, IMAGE_NAME)
 
+# ─────────────────────────────────────────────
+# IMAGE LOADING & PREPROCESSING
+# ─────────────────────────────────────────────
 
-def gather_images(data_dir):
-    images = []
-    for ext in IMG_EXTS:
-        images.extend(glob.glob(os.path.join(data_dir, ext)))
-        images.extend(glob.glob(os.path.join(data_dir, ext.upper())))
-    return sorted(set(images))
+def load_cv_image(path):
+    img_pil = Image.open(path).convert("L")
+    return np.array(img_pil)
 
+def preprocess(gray):
+    _, binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2, 2))
+    return cv2.morphologyEx(binary, cv2.MORPH_CLOSE, kernel)
 
-def load_existing(json_path):
-    if os.path.exists(json_path):
-        with open(json_path) as f:
-            data = json.load(f)
-            data.setdefault('checkboxes', [])
-            data.setdefault('lines', [])
-            data.setdefault('boxes', [])
-            return data
-    return {'checkboxes': [], 'lines': [], 'boxes': []}
+# ─────────────────────────────────────────────
+# HELPERS
+# ─────────────────────────────────────────────
 
+def rect_contains(outer, inner, tol=3):
+    """Returns True if inner rect is fully inside outer rect (with tolerance)."""
+    ox, oy, ow, oh = outer
+    ix, iy, iw, ih = inner
+    return (ix >= ox - tol and iy >= oy - tol and
+            ix + iw <= ox + ow + tol and iy + ih <= oy + oh + tol)
 
-def save_annotations(json_path, data):
-    os.makedirs(os.path.dirname(json_path), exist_ok=True)
-    with open(json_path, 'w') as f:
-        json.dump(data, f, indent=2)
+def rect_overlaps(a, b, tol=3):
+    """Returns True if two rects overlap."""
+    ax, ay, aw, ah = a
+    bx, by, bw, bh = b
+    return not (ax + aw < bx - tol or bx + bw < ax - tol or
+                ay + ah < by - tol or by + bh < ay - tol)
 
+def rect_area(r):
+    return r[2] * r[3]
 
-class AnnotationApp:
-    def __init__(self, root, images):
-        self.root   = root
-        self.images = images
-        self.idx    = 0
+# ─────────────────────────────────────────────
+# BOX DETECTION (all rectangular contours)
+# ─────────────────────────────────────────────
 
-        self.mode        = 'checkbox'
-        self.delete_mode = False
-        self.first_point = None
+def detect_all_boxes(binary, img_w, img_h):
+    """
+    Detect all 4-sided rectangular contours.
+    Returns list of (x, y, w, h).
+    """
+    BOX_MIN   = 8          # minimum side length in px
+    BOX_MAX_W = img_w * 0.90   # ignore full-page-width frames
+    BOX_MAX_H = img_h * 0.90
 
-        self.data         = {}
-        self.canvas_items = []
+    contours, hierarchy = cv2.findContours(
+        binary, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
 
-        self.root.title('Region Annotation Tool')
-        self.root.configure(bg='#1e1e1e')
-        self._build_ui()
-        self._bind_keys()
-        self._load_image()
+    raw = []
+    for i, cnt in enumerate(contours):
+        peri   = cv2.arcLength(cnt, True)
+        approx = cv2.approxPolyDP(cnt, 0.02 * peri, True)
+        if len(approx) not in (4, 5):   # allow slight rounding
+            continue
+        x, y, w, h = cv2.boundingRect(approx)
+        if w < BOX_MIN or h < BOX_MIN:
+            continue
+        if w > BOX_MAX_W or h > BOX_MAX_H:
+            continue
+        raw.append((x, y, w, h))
 
-    # ── UI ───────────────────────────────────────────────────────────────────
-    def _build_ui(self):
-        top = tk.Frame(self.root, bg='#1e1e1e')
-        top.pack(fill=tk.X, padx=6, pady=4)
+    # Deduplicate near-identical boxes (same position within 5 px)
+    raw.sort(key=lambda b: (b[0], b[1]))
+    kept = []
+    for box in raw:
+        x, y, w, h = box
+        dup = False
+        for kb in kept:
+            if abs(x - kb[0]) <= 5 and abs(y - kb[1]) <= 5 and \
+               abs(w - kb[2]) <= 5 and abs(h - kb[3]) <= 5:
+                dup = True
+                break
+        if not dup:
+            kept.append(box)
 
-        self.lbl_file = tk.Label(top, text='', bg='#1e1e1e', fg='white',
-                                 font=('Courier', 11, 'bold'))
-        self.lbl_file.pack(side=tk.LEFT)
+    return kept
 
-        self.lbl_mode = tk.Label(top, text='', bg='#1e1e1e', fg=CHECKBOX_COLOR,
-                                 font=('Courier', 12, 'bold'), width=36)
-        self.lbl_mode.pack(side=tk.RIGHT)
+# ─────────────────────────────────────────────
+# PDF-FILLER BOX RULES
+# ─────────────────────────────────────────────
 
-        self.canvas = tk.Canvas(self.root, cursor='crosshair', bg='#111')
-        self.canvas.pack(fill=tk.BOTH, expand=True)
+# Rule constants
+PARAGRAPH_MIN_AREA   = 0    # set dynamically below
+CHECKBOX_MAX_SIDE    = 50   # boxes ≤ this on both sides → checkbox candidate
+DATE_BOX_ASPECT_MAX  = 6.0  # width/height — wide thin boxes = date/text inputs
+MAX_FILLABLE_H       = 80   # boxes taller than this are likely paragraph areas
+                             # (user can't "click into" them like a PDF field)
 
-        hint = ("[C] Checkbox  [L] Line  [B] Box  "
-                "[Z] Undo  [D] Delete  [S/Enter] Save & Next  [Q/Esc] Quit")
-        tk.Label(self.root, text=hint, bg='#2a2a2a', fg='#aaa',
-                 font=('Courier', 9)).pack(fill=tk.X)
+def classify_boxes(all_boxes, img_w, img_h):
+    """
+    Apply PDF-filler logic:
+      1. Ignore giant paragraph/section boxes.
+      2. For nested boxes, keep only the INNERMOST ones.
+      3. If a box contains a horizontal line, prefer the box (ignore the line).
+      4. Classify survivors as 'checkbox' or 'input_box'.
+    Returns (checkboxes, input_boxes) — both as lists of (x, y, w, h).
+    """
+    # --- Step 1: Remove obviously non-fillable large boxes ---
+    # A box is too big if it's taller than MAX_FILLABLE_H AND wider than 40 % of page
+    # (paragraph / section containers that a user would never "type into")
+    fillable = []
+    for box in all_boxes:
+        x, y, w, h = box
+        if h > MAX_FILLABLE_H and w > img_w * 0.40:
+            continue   # big paragraph container — skip
+        fillable.append(box)
 
-    def _bind_keys(self):
-        for key in ('<c>', '<C>'):
-            self.root.bind(key, lambda e: self._set_mode('checkbox'))
-        for key in ('<l>', '<L>'):
-            self.root.bind(key, lambda e: self._set_mode('line'))
-        for key in ('<b>', '<B>'):
-            self.root.bind(key, lambda e: self._set_mode('box'))
-        for key in ('<z>', '<Z>'):
-            self.root.bind(key, lambda e: self._undo())
-        for key in ('<d>', '<D>'):
-            self.root.bind(key, lambda e: self._toggle_delete_mode())
-        for key in ('<s>', '<S>', '<Return>'):
-            self.root.bind(key, lambda e: self._save_and_next())
-        for key in ('<q>', '<Q>', '<Escape>'):
-            self.root.bind(key, lambda e: self._quit())
-        self.canvas.bind('<Button-1>', self._on_click)
+    # --- Step 2: Keep only innermost boxes (remove any box that contains another) ---
+    # Sort smallest-first so we can check containment efficiently
+    fillable.sort(key=rect_area)
+    innermost = []
+    for i, box in enumerate(fillable):
+        is_parent = False
+        for other in fillable:
+            if other is box:
+                continue
+            if rect_contains(box, other, tol=4) and rect_area(other) < rect_area(box) * 0.85:
+                # box contains a smaller box → box is a container, not a field
+                is_parent = True
+                break
+        if not is_parent:
+            innermost.append(box)
 
-    # ── Image loading ────────────────────────────────────────────────────────
-    def _load_image(self):
-        if self.idx >= len(self.images):
-            messagebox.showinfo('Done', 'All images annotated!')
-            self.root.quit()
-            return
+    # --- Step 3: Classify as checkbox vs input box ---
+    checkboxes  = []
+    input_boxes = []
 
-        img_path  = self.images[self.idx]
-        base      = os.path.splitext(os.path.basename(img_path))[0]
-        json_path = os.path.join(OUTPUT_DIR, base + '.json')
+    for box in innermost:
+        x, y, w, h = box
+        aspect = w / h if h > 0 else 999
 
-        self.current_img_path  = img_path
-        self.current_json_path = json_path
-        self.data              = load_existing(json_path)
-        self.first_point       = None
-        self.delete_mode       = False
-
-        pil_img = Image.open(img_path)
-        self.orig_w, self.orig_h = pil_img.size
-
-        screen_w = self.root.winfo_screenwidth()  - 40
-        screen_h = self.root.winfo_screenheight() - 160
-        scale    = min(screen_w / self.orig_w, screen_h / self.orig_h, 1.0)
-        self.scale = scale
-
-        disp_w = int(self.orig_w * scale)
-        disp_h = int(self.orig_h * scale)
-        pil_img = pil_img.resize((disp_w, disp_h), Image.LANCZOS)
-
-        self.tk_img = ImageTk.PhotoImage(pil_img)
-        self.canvas.config(width=disp_w, height=disp_h)
-        self.canvas.delete('all')
-        self.canvas.create_image(0, 0, anchor=tk.NW, image=self.tk_img)
-
-        self.lbl_file.config(
-            text=f'[{self.idx+1}/{len(self.images)}]  {os.path.basename(img_path)}'
-        )
-        self._refresh_mode_label()
-        self._redraw_all()
-
-    # ── Mode helpers ─────────────────────────────────────────────────────────
-    def _set_mode(self, mode):
-        self.mode        = mode
-        self.delete_mode = False
-        self.first_point = None
-        self._refresh_mode_label()
-
-    def _toggle_delete_mode(self):
-        self.delete_mode = not self.delete_mode
-        self.first_point = None
-        self._refresh_mode_label()
-
-    def _refresh_mode_label(self):
-        if self.delete_mode:
-            self.lbl_mode.config(text='MODE: DELETE (click near item)', fg=DELETE_COLOR)
-        elif self.mode == 'checkbox':
-            self.lbl_mode.config(text='MODE: CHECKBOX', fg=CHECKBOX_COLOR)
-        elif self.mode == 'line':
-            if self.first_point:
-                self.lbl_mode.config(text='MODE: LINE  (click end point)', fg=PENDING_COLOR)
-            else:
-                self.lbl_mode.config(text='MODE: LINE  (click start point)', fg=LINE_COLOR)
-        elif self.mode == 'box':
-            if self.first_point:
-                self.lbl_mode.config(text='MODE: BOX  (click opposite corner)', fg=PENDING_COLOR)
-            else:
-                self.lbl_mode.config(text='MODE: BOX  (click first corner)', fg=BOX_COLOR)
-
-    # ── Canvas helpers ───────────────────────────────────────────────────────
-    def _to_orig(self, cx, cy):
-        return cx / self.scale, cy / self.scale
-
-    def _to_canvas(self, ox, oy):
-        return ox * self.scale, oy * self.scale
-
-    def _draw_checkbox(self, ox, oy):
-        cx, cy = self._to_canvas(ox, oy)
-        r = POINT_RADIUS
-        self.canvas.create_oval(cx-r, cy-r, cx+r, cy+r,
-                                fill=CHECKBOX_COLOR, outline='white', width=1,
-                                tags='annotation')
-
-    def _draw_line(self, ox1, oy1, ox2, oy2):
-        cx1, cy1 = self._to_canvas(ox1, oy1)
-        cx2, cy2 = self._to_canvas(ox2, oy2)
-        r = POINT_RADIUS // 2
-        self.canvas.create_line(cx1, cy1, cx2, cy2,
-                                fill=LINE_COLOR, width=2, tags='annotation')
-        for cx, cy in [(cx1, cy1), (cx2, cy2)]:
-            self.canvas.create_oval(cx-r, cy-r, cx+r, cy+r,
-                                    fill=LINE_COLOR, outline='white', tags='annotation')
-
-    def _draw_box(self, ox1, oy1, ox2, oy2):
-        cx1, cy1 = self._to_canvas(ox1, oy1)
-        cx2, cy2 = self._to_canvas(ox2, oy2)
-        self.canvas.create_rectangle(cx1, cy1, cx2, cy2,
-                                     outline=BOX_COLOR, width=2,
-                                     fill='', tags='annotation')
-        r = POINT_RADIUS // 2
-        for cx, cy in [(cx1, cy1), (cx2, cy2)]:
-            self.canvas.create_oval(cx-r, cy-r, cx+r, cy+r,
-                                    fill=BOX_COLOR, outline='white', tags='annotation')
-
-    def _draw_pending(self, ox, oy):
-        cx, cy = self._to_canvas(ox, oy)
-        r = POINT_RADIUS
-        self.canvas.create_oval(cx-r, cy-r, cx+r, cy+r,
-                                fill=PENDING_COLOR, outline='white', width=1,
-                                tags='annotation')
-
-    def _redraw_all(self):
-        self.canvas.delete('annotation')
-        for cb in self.data['checkboxes']:
-            self._draw_checkbox(*cb)
-        for ln in self.data['lines']:
-            self._draw_line(*ln)
-        for bx in self.data['boxes']:
-            self._draw_box(*bx)
-        if self.first_point:
-            self._draw_pending(*self.first_point)
-
-    # ── Click handler ────────────────────────────────────────────────────────
-    def _on_click(self, event):
-        ox, oy = self._to_orig(event.x, event.y)
-
-        if self.delete_mode:
-            self._delete_nearest(ox, oy)
-            return
-
-        if self.mode == 'checkbox':
-            self.data['checkboxes'].append([round(ox, 2), round(oy, 2)])
-            self._redraw_all()
-
-        elif self.mode in ('line', 'box'):
-            if self.first_point is None:
-                self.first_point = (round(ox, 2), round(oy, 2))
-                self._refresh_mode_label()
-                self._redraw_all()
-            else:
-                x1, y1 = self.first_point
-                x2, y2 = round(ox, 2), round(oy, 2)
-                key = 'lines' if self.mode == 'line' else 'boxes'
-                self.data[key].append([x1, y1, x2, y2])
-                self.first_point = None
-                self._refresh_mode_label()
-                self._redraw_all()
-
-    # ── Undo ─────────────────────────────────────────────────────────────────
-    def _undo(self):
-        if self.first_point:
-            self.first_point = None
-            self._refresh_mode_label()
-            self._redraw_all()
-            return
-        if self.mode == 'line' and self.data['lines']:
-            self.data['lines'].pop()
-        elif self.mode == 'checkbox' and self.data['checkboxes']:
-            self.data['checkboxes'].pop()
-        elif self.mode == 'box' and self.data['boxes']:
-            self.data['boxes'].pop()
-        self._redraw_all()
-
-    # ── Delete nearest ───────────────────────────────────────────────────────
-    def _delete_nearest(self, ox, oy):
-        best_dist  = float('inf')
-        best_type  = None
-        best_index = None
-
-        for i, cb in enumerate(self.data['checkboxes']):
-            d = math.hypot(ox - cb[0], oy - cb[1])
-            if d < best_dist:
-                best_dist, best_type, best_index = d, 'checkboxes', i
-
-        for i, ln in enumerate(self.data['lines']):
-            for px, py in [(ln[0], ln[1]), (ln[2], ln[3])]:
-                d = math.hypot(ox - px, oy - py)
-                if d < best_dist:
-                    best_dist, best_type, best_index = d, 'lines', i
-
-        for i, bx in enumerate(self.data['boxes']):
-            for px, py in [(bx[0], bx[1]), (bx[2], bx[3])]:
-                d = math.hypot(ox - px, oy - py)
-                if d < best_dist:
-                    best_dist, best_type, best_index = d, 'boxes', i
-
-        threshold = 20 / self.scale
-        if best_dist < threshold and best_index is not None:
-            self.data[best_type].pop(best_index)
-            self._redraw_all()
+        # Checkbox: roughly square, small
+        if (w <= CHECKBOX_MAX_SIDE and h <= CHECKBOX_MAX_SIDE and
+                abs(1 - aspect) <= 0.35):
+            checkboxes.append(box)
         else:
-            messagebox.showwarning('Delete', 'No annotation found close enough to click.')
+            # Input box (date cell, text field, etc.)
+            input_boxes.append(box)
 
-        self.delete_mode = False
-        self._refresh_mode_label()
+    return checkboxes, input_boxes
 
-    # ── Save / navigation ────────────────────────────────────────────────────
-    def _save_current(self):
-        save_annotations(self.current_json_path, self.data)
-        print(f'Saved → {self.current_json_path}  '
-              f'({len(self.data["checkboxes"])} checkboxes, '
-              f'{len(self.data["lines"])} lines, '
-              f'{len(self.data["boxes"])} boxes)')
+# ─────────────────────────────────────────────
+# LINE DETECTION
+# ─────────────────────────────────────────────
 
-    def _save_and_next(self):
-        self._save_current()
-        self.idx += 1
-        self._load_image()
-
-    def _quit(self):
-        if messagebox.askyesno('Quit', 'Save current image and quit?'):
-            self._save_current()
-            self.root.quit()
+def check_above_is_free(binary, x, y, w, search_height=None, max_ink_ratio=0.03):
+    if search_height is None:
+        search_height = min(60, max(20, w // 8))
+    ax1, ax2 = x, x + w
+    ay2 = max(0, y - 2)
+    ay1 = max(0, y - 2 - search_height)
+    if ay2 <= ay1:
+        return True
+    region = binary[ay1:ay2, ax1:ax2]
+    if region.size == 0:
+        return True
+    return np.count_nonzero(region) / region.size <= max_ink_ratio
 
 
-# ── Entry point ──────────────────────────────────────────────────────────────
+def line_inside_any_box(lx, ly, lw, lh, input_boxes, tol=6):
+    """Return True if this line lives inside one of the input boxes."""
+    for (bx, by, bw, bh) in input_boxes:
+        if (lx >= bx - tol and lx + lw <= bx + bw + tol and
+                ly >= by - tol and ly + lh <= by + bh + tol):
+            return True
+    return False
+
+
+def detect_input_lines(binary, img_w, img_h, checkboxes, input_boxes):
+    """
+    Detect bare underline-style input fields (_______).
+    Skips lines that are:
+      - inside a detected box (box wins)
+      - near a checkbox
+      - spanning the full page (table borders)
+      - not preceded by whitespace above (table rules / text underlines)
+      - missing a label to the left (and not long enough to be a signature line)
+    """
+    LINE_MIN_W   = 60
+    LINE_MAX_H   = 6
+    LABEL_SEARCH = 400
+    LABEL_RATIO  = 0.008
+    VICINITY     = 15
+    NMS_Y        = 8
+
+    kernel  = cv2.getStructuringElement(cv2.MORPH_RECT, (30, 1))
+    h_lines = cv2.morphologyEx(binary, cv2.MORPH_OPEN, kernel)
+    contours, _ = cv2.findContours(h_lines, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    raw = []
+    for cnt in contours:
+        x, y, w, h = cv2.boundingRect(cnt)
+        if w < LINE_MIN_W or h > LINE_MAX_H:
+            continue
+        if w > img_w * 0.80:
+            continue
+
+        # Skip if near a checkbox
+        near_cb = False
+        for (cx, cy, cw, ch) in checkboxes:
+            if (x >= cx - VICINITY and x + w <= cx + cw + VICINITY and
+                    y >= cy - VICINITY and y + h <= cy + ch + VICINITY):
+                near_cb = True
+                break
+        if near_cb:
+            continue
+
+        # Skip if inside a detected input box (box takes priority)
+        if line_inside_any_box(x, y, w, h, input_boxes):
+            continue
+
+        # Above must be whitespace (real input line, not a table border)
+        if not check_above_is_free(binary, x, y, w):
+            continue
+
+        # Label check (text to the left)
+        lx1 = max(0, x - LABEL_SEARCH)
+        lx2 = max(0, x - 5)
+        ly1 = max(0, y - 12)
+        ly2 = min(binary.shape[0], y + h + 12)
+        has_label = False
+        if lx2 > lx1:
+            region = binary[ly1:ly2, lx1:lx2]
+            if region.size > 0 and np.count_nonzero(region) / region.size > LABEL_RATIO:
+                has_label = True
+
+        long_line = w > img_w * 0.15
+        if not has_label and not long_line:
+            continue
+
+        raw.append((x, y, w, h))
+
+    # Deduplicate
+    raw.sort(key=lambda b: (b[1], -b[2]))
+    kept = []
+    for box in raw:
+        x, y, w, h = box
+        dup = False
+        for kx, ky, kw, kh in kept:
+            if abs(y - ky) <= NMS_Y and abs(x - kx) <= LINE_MIN_W:
+                dup = True
+                break
+        if not dup:
+            kept.append(box)
+
+    return kept
+
+# ─────────────────────────────────────────────
+# COORDINATE CONVERSION
+# ─────────────────────────────────────────────
+
+def checkboxes_to_coords(checkboxes):
+    return [
+        [round(x + w / 2, 2), round(y + h / 2, 2)]
+        for (x, y, w, h) in checkboxes
+    ]
+
+def input_boxes_to_coords(input_boxes):
+    """
+    Returns [x1, y1, x2, y2] for each input box
+    so the clicker knows the full clickable region.
+    """
+    return [
+        [round(float(x), 2), round(float(y), 2),
+         round(float(x + w), 2), round(float(y + h), 2)]
+        for (x, y, w, h) in input_boxes
+    ]
+
+def lines_to_coords(input_lines):
+    return [
+        [round(float(x),     2),
+         round(y + h / 2,    2),
+         round(float(x + w), 2),
+         round(y + h / 2,    2)]
+        for (x, y, w, h) in input_lines
+    ]
+
+# ─────────────────────────────────────────────
+# SAVE JSON
+# ─────────────────────────────────────────────
+
+def save_coordinates(image_name, checkboxes, input_boxes, input_lines, output_dir):
+    os.makedirs(output_dir, exist_ok=True)
+    base     = os.path.splitext(image_name)[0]
+    out_path = os.path.join(output_dir, base + ".json")
+
+    payload = {
+        "checkboxes":   checkboxes_to_coords(checkboxes),
+        "input_boxes":  input_boxes_to_coords(input_boxes),
+        "lines":        lines_to_coords(input_lines),
+        "meta": {
+            "source":           "opencv",
+            "image":            image_name,
+            "checkbox_count":   len(checkboxes),
+            "input_box_count":  len(input_boxes),
+            "line_count":       len(input_lines),
+        }
+    }
+
+    with open(out_path, "w") as f:
+        json.dump(payload, f, indent=2)
+
+    print(f"Saved → {out_path}")
+    print(f"  checkboxes  : {len(payload['checkboxes'])}")
+    print(f"  input_boxes : {len(payload['input_boxes'])}")
+    print(f"  lines       : {len(payload['lines'])}")
+    return out_path
+
+# ─────────────────────────────────────────────
+# VISUALISE
+# ─────────────────────────────────────────────
+
+def draw_results(gray, checkboxes, input_boxes, input_lines):
+    vis = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
+    # Checkboxes — blue
+    for (x, y, w, h) in checkboxes:
+        cv2.rectangle(vis, (x, y), (x+w, y+h), (255, 80, 0), 2)
+    # Input boxes — green
+    for (x, y, w, h) in input_boxes:
+        cv2.rectangle(vis, (x, y), (x+w, y+h), (0, 200, 80), 2)
+    # Underline lines — orange
+    for (x, y, w, h) in input_lines:
+        cv2.rectangle(vis, (x, y-3), (x+w, y+h+3), (0, 165, 255), 2)
+    return vis
+
+# ─────────────────────────────────────────────
+# MAIN
+# ─────────────────────────────────────────────
+
 def main():
-    images = gather_images(DATA_DIR)
-    if not images:
-        print(f'No images found in: {os.path.abspath(DATA_DIR)}')
-        sys.exit(1)
+    gray         = load_cv_image(IMAGE_PATH)
+    h_img, w_img = gray.shape
+    binary       = preprocess(gray)
 
-    print(f'Found {len(images)} image(s) in {os.path.abspath(DATA_DIR)}')
-    print(f'Annotations will be saved to: {os.path.abspath(OUTPUT_DIR)}')
+    # 1. Detect every rectangle on the page
+    all_boxes = detect_all_boxes(binary, w_img, h_img)
 
-    root = tk.Tk()
-    app  = AnnotationApp(root, images)
-    root.mainloop()
+    # 2. Apply PDF-filler rules → innermost fillable boxes only
+    checkboxes, input_boxes = classify_boxes(all_boxes, w_img, h_img)
+
+    # 3. Detect bare underline fields (box takes priority over line)
+    input_lines = detect_input_lines(binary, w_img, h_img, checkboxes, input_boxes)
+
+    print(f"=== Detection Results for {IMAGE_NAME} ===")
+    print(f"  All boxes detected : {len(all_boxes)}")
+    print(f"  Checkboxes         : {len(checkboxes)}")
+    print(f"  Input boxes        : {len(input_boxes)}")
+    print(f"  Underline lines    : {len(input_lines)}")
+
+    save_coordinates(IMAGE_NAME, checkboxes, input_boxes, input_lines, OUTPUT_DIR)
+
+    vis = draw_results(gray, checkboxes, input_boxes, input_lines)
+
+    legend = [
+        mpatches.Patch(color="dodgerblue", label=f"Checkboxes ({len(checkboxes)})"),
+        mpatches.Patch(color="limegreen",  label=f"Input boxes ({len(input_boxes)})"),
+        mpatches.Patch(color="orange",     label=f"Underline lines ({len(input_lines)})"),
+    ]
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(22, 14))
+    ax1.imshow(gray, cmap="gray")
+    ax1.set_title("Original Form", fontsize=14)
+    ax1.axis("off")
+
+    ax2.imshow(cv2.cvtColor(vis, cv2.COLOR_BGR2RGB))
+    ax2.set_title("Detected Fillable Elements", fontsize=14)
+    ax2.legend(handles=legend, loc="upper right", fontsize=11)
+    ax2.axis("off")
+
+    plt.suptitle(f"OpenCV Detection — {IMAGE_NAME}", fontsize=16, fontweight="bold")
+    plt.tight_layout()
+    plt.show()
+
+    annotated_path = os.path.join(OUTPUT_DIR, os.path.splitext(IMAGE_NAME)[0] + "_annotated.png")
+    cv2.imwrite(annotated_path, vis)
+    print(f"Annotated image saved → {annotated_path}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
