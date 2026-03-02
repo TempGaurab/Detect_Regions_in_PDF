@@ -46,3 +46,8 @@ Major Files
 
 detect_and_save.py -> OPENCV code that detects regions and saves them as JSON files.
 annotate.py -> The main code used to fill and annotate the PDF files.
+
+Outline:
+506 pdf files related to forms collected
+99 empty file(s) deleted as they did not have any fillable elements
+407 files tested.
