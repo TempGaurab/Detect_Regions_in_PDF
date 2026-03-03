@@ -1,0 +1,27 @@
+{
+  "checkboxes": [
+    [
+      142.5,
+      700.0
+    ],
+    [
+      142.5,
+      766.5
+    ],
+    [
+      142.5,
+      1166.5
+    ],
+    [
+      142.5,
+      1233.5
+    ]
+  ],
+  "lines": [],
+  "meta": {
+    "source": "opencv",
+    "image": "form68.png",
+    "checkbox_count": 4,
+    "line_count": 0
+  }
+}
