@@ -1,0 +1,21 @@
+{
+  "checkboxes": [
+    [
+      232.5,
+      543.5
+    ],
+    [
+      728.5,
+      237.5
+    ]
+  ],
+  "input_boxes": [],
+  "lines": [],
+  "meta": {
+    "source_file": "form242.png",
+    "image_size": [
+      1700,
+      2200
+    ]
+  }
+}
