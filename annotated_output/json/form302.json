@@ -1,27 +1,29 @@
 {
   "checkboxes": [
     [
-      278.0,
-      1489.0
+      479.0,
+      1488.5
     ],
     [
-      283.5,
-      641.5
+      277.5,
+      1488.5
     ],
     [
-      479.5,
-      1489.0
+      484.5,
+      641.0
     ],
     [
-      485.0,
-      641.5
+      283.0,
+      641.0
     ]
   ],
+  "input_boxes": [],
   "lines": [],
   "meta": {
-    "source": "opencv",
-    "image": "form302.png",
-    "checkbox_count": 4,
-    "line_count": 0
+    "source_file": "form302.png",
+    "image_size": [
+      1700,
+      2200
+    ]
   }
 }
