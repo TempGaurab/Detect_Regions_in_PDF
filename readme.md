@@ -95,4 +95,42 @@ Boxes:
 
 
 OpenCV Advanced
+============================================================
+TOLERANCE: 5%
+============================================================
+
+Checkboxes:
+  Precision: 0.679 | Recall: 0.707 | F1: 0.693 | Accuracy: 0.530
+
+Lines:
+  Precision: 0.515 | Recall: 0.352 | F1: 0.418 | Accuracy: 0.264
+
+Boxes:
+  Precision: 0.320 | Recall: 0.571 | F1: 0.410 | Accuracy: 0.258
+
+============================================================
+TOLERANCE: 10%
+============================================================
+
+Checkboxes:
+  Precision: 0.682 | Recall: 0.710 | F1: 0.696 | Accuracy: 0.533
+
+Lines:
+  Precision: 0.522 | Recall: 0.356 | F1: 0.423 | Accuracy: 0.268
+
+Boxes:
+  Precision: 0.345 | Recall: 0.615 | F1: 0.442 | Accuracy: 0.284
+
+============================================================
+TOLERANCE: 20%
+============================================================
+
+Checkboxes:
+  Precision: 0.685 | Recall: 0.713 | F1: 0.699 | Accuracy: 0.537
+
+Lines:
+  Precision: 0.559 | Recall: 0.382 | F1: 0.454 | Accuracy: 0.294
+
+Boxes:
+  Precision: 0.406 | Recall: 0.724 | F1: 0.520 | Accuracy: 0.351
 ```
