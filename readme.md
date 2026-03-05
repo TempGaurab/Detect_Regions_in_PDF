@@ -212,3 +212,41 @@ Precision: 0.797 | Recall: 0.878 | F1: 0.836 | Accuracy (Jaccard): 0.718
 
 Boxes:
 Precision: 0.726 | Recall: 0.798 | F1: 0.760 | Accuracy (Jaccard): 0.613
+
+# '''YOLO-v26'''
+
+============================================================
+TOLERANCE: 5%
+============================================================
+Checkboxes:
+Precision: 0.912 | Recall: 0.601 | F1: 0.725 | Accuracy (Jaccard): 0.569
+
+Lines:
+Precision: 0.793 | Recall: 0.697 | F1: 0.742 | Accuracy (Jaccard): 0.590
+
+Boxes:
+Precision: 0.571 | Recall: 0.588 | F1: 0.579 | Accuracy (Jaccard): 0.408
+
+============================================================
+TOLERANCE: 10%
+============================================================
+Checkboxes:
+Precision: 0.933 | Recall: 0.615 | F1: 0.741 | Accuracy (Jaccard): 0.589
+
+Lines:
+Precision: 0.817 | Recall: 0.717 | F1: 0.764 | Accuracy (Jaccard): 0.618
+
+Boxes:
+Precision: 0.615 | Recall: 0.633 | F1: 0.624 | Accuracy (Jaccard): 0.454
+
+============================================================
+TOLERANCE: 20%
+============================================================
+Checkboxes:
+Precision: 0.944 | Recall: 0.622 | F1: 0.750 | Accuracy (Jaccard): 0.600
+
+Lines:
+Precision: 0.839 | Recall: 0.737 | F1: 0.785 | Accuracy (Jaccard): 0.646
+
+Boxes:
+Precision: 0.713 | Recall: 0.734 | F1: 0.724 | Accuracy (Jaccard): 0.567
