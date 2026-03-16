@@ -1,6 +1,6 @@
 # DETECT_REGIONS_IN_PDF
 
-This project focuses on **document region detection** and **annotation**, specifically targeting PDF-to-image workflows using _OpenCV_ and _Donut_ models.
+This project focuses on **document region detection** and **annotation**, specifically targeting PDF-to-image workflows using _OpenCV_ and _Donut_ models !
 
 ---
 
