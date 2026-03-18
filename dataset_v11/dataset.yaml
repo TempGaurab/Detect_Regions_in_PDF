@@ -1,8 +1,0 @@
-names:
-- checkbox
-- line
-- box
-nc: 3
-path: /Users/gauurab/Documents/Projects/salary-nku/camp-norse/Detect_Regions_in_PDF/dataset_v11
-train: images/train
-val: images/val
