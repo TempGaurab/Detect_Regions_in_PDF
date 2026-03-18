@@ -1,0 +1,1305 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AutoFormBench — Benchmark Dataset for Form Understanding</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      :root {
+        --ink: #0f0e0c;
+        --paper: #faf8f3;
+        --paper-2: #f2efe8;
+        --accent: #c84b2f;
+        --accent-2: #e8703a;
+        --muted: #7a7469;
+        --border: #ddd9cf;
+        --mono: "DM Mono", monospace;
+        --serif: "DM Serif Display", serif;
+        --sans: "Instrument Sans", sans-serif;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        background: var(--paper);
+        color: var(--ink);
+        font-family: var(--sans);
+        font-size: 16px;
+        line-height: 1.7;
+        overflow-x: hidden;
+      }
+
+      /* ── NAV ── */
+      nav {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 3rem;
+        height: 60px;
+        background: rgba(250, 248, 243, 0.92);
+        backdrop-filter: blur(12px);
+        border-bottom: 1px solid var(--border);
+      }
+
+      .nav-logo {
+        font-family: var(--mono);
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--accent);
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        text-decoration: none;
+      }
+
+      .nav-links {
+        display: flex;
+        gap: 2.5rem;
+        list-style: none;
+      }
+
+      .nav-links a {
+        font-family: var(--mono);
+        font-size: 12px;
+        font-weight: 500;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+        text-decoration: none;
+        transition: color 0.2s;
+      }
+
+      .nav-links a:hover {
+        color: var(--accent);
+      }
+
+      /* ── HERO ── */
+      #home {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 100px 3rem 4rem;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .hero-grid {
+        position: absolute;
+        inset: 0;
+        background-image: linear-gradient(var(--border) 1px, transparent 1px),
+          linear-gradient(90deg, var(--border) 1px, transparent 1px);
+        background-size: 60px 60px;
+        opacity: 0.5;
+      }
+
+      .hero-accent-line {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: calc(3rem + 260px);
+        width: 1px;
+        background: var(--accent);
+        opacity: 0.15;
+      }
+
+      .hero-content {
+        position: relative;
+        max-width: 860px;
+      }
+
+      .hero-tag {
+        display: inline-block;
+        font-family: var(--mono);
+        font-size: 11px;
+        font-weight: 500;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--accent);
+        border: 1px solid var(--accent);
+        padding: 4px 12px;
+        margin-bottom: 2rem;
+        animation: fadeUp 0.6s ease both;
+      }
+
+      h1.hero-title {
+        font-family: var(--serif);
+        font-size: clamp(3rem, 7vw, 5.5rem);
+        line-height: 1.05;
+        font-weight: 400;
+        letter-spacing: -0.01em;
+        margin-bottom: 1.5rem;
+        animation: fadeUp 0.7s 0.1s ease both;
+      }
+
+      h1.hero-title em {
+        font-style: italic;
+        color: var(--accent);
+      }
+
+      .hero-sub {
+        font-size: 1.05rem;
+        color: var(--muted);
+        max-width: 560px;
+        margin-bottom: 2.5rem;
+        animation: fadeUp 0.7s 0.2s ease both;
+      }
+
+      .hero-stats {
+        display: flex;
+        gap: 3rem;
+        margin-bottom: 2.5rem;
+        animation: fadeUp 0.7s 0.3s ease both;
+      }
+
+      .stat {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .stat-num {
+        font-family: var(--serif);
+        font-size: 2.2rem;
+        color: var(--ink);
+        line-height: 1;
+      }
+
+      .stat-label {
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--muted);
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        margin-top: 4px;
+      }
+
+      .hero-actions {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        animation: fadeUp 0.7s 0.4s ease both;
+      }
+
+      .btn-primary {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: var(--accent);
+        color: #fff;
+        font-family: var(--mono);
+        font-size: 12px;
+        font-weight: 500;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        padding: 12px 28px;
+        text-decoration: none;
+        transition: background 0.2s, transform 0.15s;
+      }
+
+      .btn-primary:hover {
+        background: var(--accent-2);
+        transform: translateY(-1px);
+      }
+
+      .btn-secondary {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: transparent;
+        color: var(--ink);
+        font-family: var(--mono);
+        font-size: 12px;
+        font-weight: 500;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        padding: 12px 28px;
+        border: 1px solid var(--border);
+        text-decoration: none;
+        transition: border-color 0.2s, transform 0.15s;
+      }
+
+      .btn-secondary:hover {
+        border-color: var(--ink);
+        transform: translateY(-1px);
+      }
+
+      /* ── SECTION COMMON ── */
+      section {
+        padding: 6rem 3rem;
+        border-top: 1px solid var(--border);
+      }
+
+      .section-inner {
+        max-width: 960px;
+        margin: 0 auto;
+      }
+
+      .section-tag {
+        font-family: var(--mono);
+        font-size: 11px;
+        font-weight: 500;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin-bottom: 1rem;
+      }
+
+      h2.section-title {
+        font-family: var(--serif);
+        font-size: clamp(2rem, 4vw, 3rem);
+        font-weight: 400;
+        line-height: 1.1;
+        margin-bottom: 2rem;
+      }
+
+      /* ── DESCRIPTION ── */
+      .desc-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 4rem;
+        margin-top: 3rem;
+      }
+
+      .desc-body p {
+        color: #3a3832;
+        margin-bottom: 1.1rem;
+        font-size: 0.97rem;
+      }
+
+      .desc-sidebar {
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+      }
+
+      .fact-card {
+        background: var(--paper-2);
+        border: 1px solid var(--border);
+        padding: 1.25rem 1.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .fact-label {
+        font-family: var(--mono);
+        font-size: 10px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      .fact-value {
+        font-family: var(--serif);
+        font-size: 1.3rem;
+        color: var(--ink);
+      }
+
+      .classes-row {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2.5rem;
+        flex-wrap: wrap;
+      }
+
+      .class-pill {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        border: 1px solid var(--border);
+        padding: 0.75rem 1.25rem;
+        background: var(--paper-2);
+        flex: 1;
+        min-width: 160px;
+      }
+
+      .class-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+
+      .class-name {
+        font-family: var(--mono);
+        font-size: 13px;
+        font-weight: 500;
+      }
+      .class-desc {
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 2px;
+      }
+
+      /* results table */
+      .results-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 2rem;
+        font-size: 13px;
+      }
+
+      .results-table th {
+        font-family: var(--mono);
+        font-size: 10px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--muted);
+        padding: 8px 12px;
+        text-align: left;
+        border-bottom: 2px solid var(--border);
+      }
+
+      .results-table td {
+        padding: 9px 12px;
+        border-bottom: 1px solid var(--border);
+        color: #3a3832;
+      }
+
+      .results-table tr.model-row td {
+        font-weight: 600;
+        background: var(--paper-2);
+      }
+      .results-table tr.highlight td {
+        color: var(--accent);
+      }
+      .results-table .best {
+        color: var(--accent);
+        font-weight: 600;
+      }
+
+      /* ── DOWNLOAD ── */
+      #download {
+        background: var(--ink);
+        color: var(--paper);
+        border-top: none;
+      }
+      #download .section-tag {
+        color: var(--accent-2);
+      }
+      #download h2.section-title {
+        color: var(--paper);
+      }
+
+      .download-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 1px;
+        margin-top: 3rem;
+        background: #2a2822;
+        border: 1px solid #2a2822;
+      }
+
+      .dl-card {
+        background: #1a1916;
+        padding: 2rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        transition: background 0.2s;
+      }
+
+      .dl-card:hover {
+        background: #222018;
+      }
+
+      .dl-icon {
+        width: 40px;
+        height: 40px;
+        border: 1px solid #3a3832;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 0.5rem;
+      }
+
+      .dl-icon svg {
+        width: 18px;
+        height: 18px;
+        fill: var(--accent-2);
+      }
+
+      .dl-title {
+        font-family: var(--serif);
+        font-size: 1.2rem;
+        color: var(--paper);
+      }
+
+      .dl-desc {
+        font-size: 13px;
+        color: #7a7469;
+        line-height: 1.6;
+      }
+
+      .dl-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--accent-2);
+        text-decoration: none;
+        margin-top: auto;
+        padding-top: 1rem;
+        border-top: 1px solid #2a2822;
+        transition: color 0.2s;
+      }
+
+      .dl-link:hover {
+        color: #fff;
+      }
+
+      .dl-note {
+        margin-top: 2.5rem;
+        padding: 1.25rem 1.5rem;
+        border: 1px solid #2a2822;
+        font-family: var(--mono);
+        font-size: 12px;
+        color: #5a5852;
+        line-height: 1.7;
+      }
+
+      /* ── LICENSE ── */
+      .license-block {
+        background: var(--paper-2);
+        border: 1px solid var(--border);
+        padding: 2.5rem;
+        margin-top: 2rem;
+      }
+
+      .license-block h3 {
+        font-family: var(--serif);
+        font-size: 1.4rem;
+        font-weight: 400;
+        margin-bottom: 1.25rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .license-block p {
+        font-size: 0.9rem;
+        color: #5a5852;
+        margin-bottom: 1rem;
+        line-height: 1.75;
+      }
+
+      .license-block p strong {
+        color: var(--ink);
+        font-weight: 600;
+      }
+
+      .license-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+        margin-top: 2rem;
+      }
+
+      .license-item {
+        border-left: 2px solid var(--border);
+        padding-left: 1.25rem;
+      }
+
+      .license-item h4 {
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin-bottom: 0.5rem;
+      }
+
+      .license-item p {
+        font-size: 0.88rem;
+        color: #5a5852;
+        margin: 0;
+      }
+
+      .age-banner {
+        margin-top: 2rem;
+        background: var(--accent);
+        color: #fff;
+        padding: 1rem 1.5rem;
+        font-family: var(--mono);
+        font-size: 12px;
+        letter-spacing: 0.04em;
+      }
+
+      /* ── CONTACT ── */
+      .contact-layout {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 4rem;
+        margin-top: 2.5rem;
+        align-items: start;
+      }
+
+      .contact-info {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+      }
+
+      .contact-card {
+        border: 1px solid var(--border);
+        padding: 1.75rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .contact-card-label {
+        font-family: var(--mono);
+        font-size: 10px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      .contact-name {
+        font-family: var(--serif);
+        font-size: 1.4rem;
+        color: var(--ink);
+      }
+
+      .contact-affil {
+        font-size: 0.88rem;
+        color: var(--muted);
+      }
+
+      .contact-email {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-family: var(--mono);
+        font-size: 13px;
+        color: var(--accent);
+        text-decoration: none;
+        margin-top: 0.5rem;
+        transition: color 0.2s;
+      }
+
+      .contact-email:hover {
+        color: var(--accent-2);
+      }
+
+      .contact-text {
+        font-size: 0.97rem;
+        color: #4a4840;
+        line-height: 1.75;
+      }
+      .contact-text a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+      .contact-text a:hover {
+        text-decoration: underline;
+      }
+
+      /* ── FOOTER ── */
+      footer {
+        background: var(--ink);
+        color: #5a5852;
+        padding: 2rem 3rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.04em;
+        gap: 1rem;
+        flex-wrap: wrap;
+      }
+
+      footer a {
+        color: var(--accent-2);
+        text-decoration: none;
+      }
+      footer a:hover {
+        color: #fff;
+      }
+
+      /* ── ANIMATIONS ── */
+      @keyframes fadeUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .reveal {
+        opacity: 0;
+        transform: translateY(24px);
+        transition: opacity 0.6s ease, transform 0.6s ease;
+      }
+      .reveal.visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      /* ── RESPONSIVE ── */
+      @media (max-width: 768px) {
+        nav {
+          padding: 0 1.5rem;
+        }
+        .nav-links {
+          gap: 1.5rem;
+        }
+        #home {
+          padding: 100px 1.5rem 3rem;
+        }
+        section {
+          padding: 4rem 1.5rem;
+        }
+        .desc-grid {
+          grid-template-columns: 1fr;
+          gap: 2.5rem;
+        }
+        .contact-layout {
+          grid-template-columns: 1fr;
+          gap: 2rem;
+        }
+        .license-grid {
+          grid-template-columns: 1fr;
+        }
+        .hero-stats {
+          gap: 2rem;
+        }
+        footer {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- NAV -->
+    <nav>
+      <a class="nav-logo" href="#home">AutoFormBench</a>
+      <ul class="nav-links">
+        <li><a href="#home">Home</a></li>
+        <li><a href="#description">Description</a></li>
+        <li><a href="#download">Download</a></li>
+        <li><a href="#license">License</a></li>
+        <li><a href="#contact">Contact</a></li>
+      </ul>
+    </nav>
+
+    <!-- HERO -->
+    <section id="home" style="border-top: none">
+      <div class="hero-grid"></div>
+      <div class="hero-accent-line"></div>
+      <div class="hero-content">
+        <div class="hero-tag">Benchmark Dataset · NLP · Computer Vision</div>
+        <h1 class="hero-title">Auto<em>Form</em><br />Bench</h1>
+        <p class="hero-sub">
+          A benchmark dataset for automating form understanding — localizing and
+          classifying fillable form elements across diverse real-world document
+          types using YOLO-based object detection.
+        </p>
+        <div class="hero-stats">
+          <div class="stat">
+            <span class="stat-num">407</span>
+            <span class="stat-label">Annotated forms</span>
+          </div>
+          <div class="stat">
+            <span class="stat-num">3</span>
+            <span class="stat-label">Element classes</span>
+          </div>
+          <div class="stat">
+            <span class="stat-num">300</span>
+            <span class="stat-label">DPI resolution</span>
+          </div>
+        </div>
+        <div class="hero-actions">
+          <a href="#download" class="btn-primary">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+            >
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            Download Dataset
+          </a>
+          <a href="#description" class="btn-secondary">Learn more →</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- DESCRIPTION -->
+    <section id="description">
+      <div class="section-inner">
+        <div class="section-tag reveal">Overview</div>
+        <h2 class="section-title reveal">What is AutoFormBench?</h2>
+
+        <div class="desc-grid">
+          <div class="desc-body reveal">
+            <p>
+              AutoFormBench is a benchmark dataset designed to support research
+              in automated form understanding — the task of detecting,
+              localizing, and classifying fillable elements within structured
+              documents such as government applications, healthcare records, and
+              enterprise invoices.
+            </p>
+            <p>
+              The dataset comprises
+              <strong>407 manually annotated real-world PDF forms</strong>
+              spanning three primary domains. All documents were converted to
+              high-resolution images at 300 DPI to preserve fine-grained visual
+              features such as radio buttons, hairline borders, and small-print
+              labels.
+            </p>
+            <p>
+              Each document was annotated using a custom Python tool that
+              rendered pages as images and allowed annotators to define and
+              classify regions of interest. Ground truth is stored as structured
+              JSON files mapping each field to its bounding coordinates and
+              functional class.
+            </p>
+            <p>
+              The benchmark was developed as part of a study comparing classical
+              OpenCV approaches against four YOLO architectures (YOLOv8,
+              YOLOv11, YOLOv26-s, YOLOv26-l).
+              <strong
+                >YOLOv11 consistently outperforms all other approaches</strong
+              >, achieving the strongest balance of precision and recall across
+              all three element classes. Evaluation uses a tolerance-based
+              matching protocol at 5%, 10%, and 20% of image dimensions —
+              reflecting the practical requirements of downstream form-filling
+              automation.
+            </p>
+
+            <div class="classes-row">
+              <div class="class-pill">
+                <div class="class-dot" style="background: #378add"></div>
+                <div>
+                  <div class="class-name">Checkboxes</div>
+                  <div class="class-desc">Near-square, 10–50 px</div>
+                </div>
+              </div>
+              <div class="class-pill">
+                <div class="class-dot" style="background: #1d9e75"></div>
+                <div>
+                  <div class="class-name">Lines</div>
+                  <div class="class-desc">Wide horizontal input fields</div>
+                </div>
+              </div>
+              <div class="class-pill">
+                <div class="class-dot" style="background: #d4537e"></div>
+                <div>
+                  <div class="class-name">Boxes</div>
+                  <div class="class-desc">Text input rectangles</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="desc-sidebar reveal">
+            <div class="fact-card">
+              <span class="fact-label">Source documents</span>
+              <span class="fact-value">506 PDFs curated</span>
+            </div>
+            <div class="fact-card">
+              <span class="fact-label">After filtering empty docs</span>
+              <span class="fact-value">407 annotated forms</span>
+            </div>
+            <div class="fact-card">
+              <span class="fact-label">Domains covered</span>
+              <span class="fact-value">Government · Health · Enterprise</span>
+            </div>
+            <div class="fact-card">
+              <span class="fact-label">Train / Val / Test split</span>
+              <span class="fact-value">70% / 15% / 15%</span>
+            </div>
+            <div class="fact-card">
+              <span class="fact-label">Ground truth format</span>
+              <span class="fact-value">Structured JSON</span>
+            </div>
+            <div class="fact-card">
+              <span class="fact-label">Best model (F1 @ 20% tol.)</span>
+              <span class="fact-value" style="color: var(--accent)"
+                >YOLOv11 0.827 / 0.836 / 0.760</span
+              >
+            </div>
+          </div>
+        </div>
+
+        <!-- Results summary table -->
+        <div style="margin-top: 4rem" class="reveal">
+          <div class="section-tag">Best results · Tolerance 20%</div>
+          <table class="results-table">
+            <thead>
+              <tr>
+                <th>Model</th>
+                <th>Class</th>
+                <th>Precision</th>
+                <th>Recall</th>
+                <th>F1</th>
+                <th>Jaccard</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="model-row">
+                <td colspan="6">Initial OpenCV</td>
+              </tr>
+              <tr>
+                <td></td>
+                <td>Checkboxes</td>
+                <td>0.822</td>
+                <td>0.687</td>
+                <td>0.749</td>
+                <td>0.598</td>
+              </tr>
+              <tr>
+                <td></td>
+                <td>Lines</td>
+                <td>0.251</td>
+                <td>0.530</td>
+                <td>0.341</td>
+                <td>0.205</td>
+              </tr>
+              <tr>
+                <td></td>
+                <td>Boxes</td>
+                <td>0.347</td>
+                <td>0.750</td>
+                <td>0.474</td>
+                <td>0.311</td>
+              </tr>
+
+              <tr class="model-row">
+                <td colspan="6">Advanced OpenCV</td>
+              </tr>
+              <tr>
+                <td></td>
+                <td>Checkboxes</td>
+                <td>0.685</td>
+                <td>0.713</td>
+                <td>0.699</td>
+                <td>0.537</td>
+              </tr>
+              <tr>
+                <td></td>
+                <td>Lines</td>
+                <td>0.559</td>
+                <td>0.382</td>
+                <td>0.454</td>
+                <td>0.294</td>
+              </tr>
+              <tr>
+                <td></td>
+                <td>Boxes</td>
+                <td>0.406</td>
+                <td>0.724</td>
+                <td>0.520</td>
+                <td>0.351</td>
+              </tr>
+
+              <tr class="model-row highlight">
+                <td colspan="6">YOLOv11 — Best overall</td>
+              </tr>
+              <tr class="highlight">
+                <td></td>
+                <td>Checkboxes</td>
+                <td>0.855</td>
+                <td>0.800</td>
+                <td class="best">0.827</td>
+                <td class="best">0.705</td>
+              </tr>
+              <tr class="highlight">
+                <td></td>
+                <td>Lines</td>
+                <td>0.797</td>
+                <td>0.878</td>
+                <td class="best">0.836</td>
+                <td class="best">0.718</td>
+              </tr>
+              <tr class="highlight">
+                <td></td>
+                <td>Boxes</td>
+                <td>0.726</td>
+                <td>0.798</td>
+                <td class="best">0.760</td>
+                <td class="best">0.613</td>
+              </tr>
+
+              <tr class="model-row">
+                <td colspan="6">YOLOv26-s</td>
+              </tr>
+              <tr>
+                <td></td>
+                <td>Checkboxes</td>
+                <td>0.944</td>
+                <td>0.622</td>
+                <td>0.750</td>
+                <td>0.600</td>
+              </tr>
+              <tr>
+                <td></td>
+                <td>Lines</td>
+                <td>0.839</td>
+                <td>0.737</td>
+                <td>0.785</td>
+                <td>0.646</td>
+              </tr>
+              <tr>
+                <td></td>
+                <td>Boxes</td>
+                <td>0.713</td>
+                <td>0.734</td>
+                <td>0.724</td>
+                <td>0.567</td>
+              </tr>
+
+              <tr class="model-row">
+                <td colspan="6">YOLOv26-l</td>
+              </tr>
+              <tr>
+                <td></td>
+                <td>Checkboxes</td>
+                <td>0.981</td>
+                <td>0.575</td>
+                <td>0.725</td>
+                <td>0.569</td>
+              </tr>
+              <tr>
+                <td></td>
+                <td>Lines</td>
+                <td>0.825</td>
+                <td>0.818</td>
+                <td>0.821</td>
+                <td>0.697</td>
+              </tr>
+              <tr>
+                <td></td>
+                <td>Boxes</td>
+                <td>0.761</td>
+                <td>0.773</td>
+                <td>0.767</td>
+                <td>0.622</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- DOWNLOAD -->
+    <section id="download">
+      <div class="section-inner">
+        <div class="section-tag reveal">Resources</div>
+        <h2 class="section-title reveal">Download</h2>
+        <p class="reveal" style="color: #7a7469; max-width: 560px">
+          All resources are freely available for non-commercial research and
+          educational use. By downloading, you agree to the terms outlined in
+          the License section.
+        </p>
+
+        <div class="download-grid reveal">
+          <div class="dl-card">
+            <div class="dl-icon">
+              <svg viewBox="0 0 24 24">
+                <path
+                  d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"
+                />
+                <polyline points="17 21 17 13 7 13 7 21" />
+                <polyline points="7 3 7 8 15 8" />
+              </svg>
+            </div>
+            <div class="dl-title">Annotated Dataset</div>
+            <div class="dl-desc">
+              407 annotated PDF forms with JSON ground truth files. Includes all
+              bounding coordinates and element class labels.
+            </div>
+            <a
+              href="https://github.com/TempGaurab/Detect_Regions_in_PDF/tree/main/dataset"
+              class="dl-link"
+              target="_blank"
+            >
+              Download from GitHub →
+            </a>
+          </div>
+
+          <div class="dl-card">
+            <div class="dl-icon">
+              <svg viewBox="0 0 24 24">
+                <polyline points="16 18 22 12 16 6" />
+                <polyline points="8 6 2 12 8 18" />
+              </svg>
+            </div>
+            <div class="dl-title">Source Code</div>
+            <div class="dl-desc">
+              Full pipeline code for the YOLOv11 detection framework, annotation
+              tool, and evaluation scripts comparing YOLO architectures against
+              OpenCV baselines.
+            </div>
+            <a
+              href="https://github.com/TempGaurab/Detect_Regions_in_PDF"
+              class="dl-link"
+              target="_blank"
+            >
+              View on GitHub →
+            </a>
+          </div>
+
+          <div class="dl-card">
+            <div class="dl-icon">
+              <svg viewBox="0 0 24 24">
+                <path
+                  d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+                />
+                <polyline points="14 2 14 8 20 8" />
+                <line x1="16" y1="13" x2="8" y2="13" />
+                <line x1="16" y1="17" x2="8" y2="17" />
+                <polyline points="10 9 9 9 8 9" />
+              </svg>
+            </div>
+            <div class="dl-title">Paper</div>
+            <div class="dl-desc">
+              AutoFormBench: Benchmark Dataset for Automating Form
+              Understanding. Baral & Zhou, Northern Kentucky University, 2024.
+            </div>
+            <a href="#contact" class="dl-link"> Contact for preprint → </a>
+          </div>
+        </div>
+
+        <div class="dl-note reveal">
+          ⚠ &nbsp;Access is restricted to users 18 years of age or older. The
+          dataset is provided solely for non-commercial, research, and
+          educational purposes. See the License section for full terms of use.
+        </div>
+      </div>
+    </section>
+
+    <!-- LICENSE -->
+    <section id="license">
+      <div class="section-inner">
+        <div class="section-tag reveal">Terms of Use</div>
+        <h2 class="section-title reveal">License</h2>
+
+        <div class="license-block reveal">
+          <h3>AutoFormBench Dataset License</h3>
+
+          <p>
+            <strong
+              >BY DOWNLOADING, COPYING, OR ACCESSING THE DATASET, YOU
+              ("LICENSEE") AGREE TO THESE TERMS AND CONFIRM THAT YOU ARE
+              EIGHTEEN (18) YEARS OF AGE OR OLDER.</strong
+            >
+            If you are accepting these terms on behalf of a Licensee, you
+            represent and warrant that you have full authority to do so. If you
+            do not agree to these terms, do not download, install, copy, access,
+            or use the dataset.
+          </p>
+
+          <div class="license-grid">
+            <div class="license-item">
+              <h4>§1 — Permitted Use</h4>
+              <p>
+                The AutoFormBench dataset may be used solely for
+                <strong
+                  >non-commercial, research, and educational purposes</strong
+                >. Any commercial use is strictly prohibited without prior
+                written permission from the authors.
+              </p>
+            </div>
+            <div class="license-item">
+              <h4>§2 — No Warranties</h4>
+              <p>
+                The dataset is provided "as is" without warranties of any kind.
+                It has not been evaluated for operational reliability or
+                accuracy of data. No representation is made on its availability
+                or fitness for a particular purpose.
+              </p>
+            </div>
+            <div class="license-item">
+              <h4>§3 — Limitation of Liability</h4>
+              <p>
+                The authors are not liable for any claim arising from Licensee's
+                use of the dataset. Licensee assumes all risks, including risks
+                of errors, intellectual property issues related to publicly
+                available images, and interruption of access.
+              </p>
+            </div>
+            <div class="license-item">
+              <h4>§4 — Third-Party Content</h4>
+              <p>
+                The dataset includes images of real scanned forms. Licensee is
+                solely responsible for determining what additional licenses,
+                clearances, or consents must be obtained for their specific use
+                of these images.
+              </p>
+            </div>
+            <div class="license-item">
+              <h4>§5 — Modifications</h4>
+              <p>
+                The authors may update or modify the dataset at any time without
+                notice. These terms of use may be modified or discontinued at
+                any time.
+              </p>
+            </div>
+            <div class="license-item">
+              <h4>§6 — General</h4>
+              <p>
+                If any provision of these terms is held invalid or
+                unenforceable, the remaining provisions remain in full force.
+                Terms that by their nature extend beyond termination remain in
+                effect until fulfilled.
+              </p>
+            </div>
+          </div>
+
+          <div class="age-banner">
+            ✦ &nbsp; ACCESS TO AUTOFORMBENCH IS NOT AVAILABLE TO ANYONE UNDER
+            THE AGE OF EIGHTEEN (18).
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CONTACT -->
+    <section id="contact">
+      <div class="section-inner">
+        <div class="section-tag reveal">Get in Touch</div>
+        <h2 class="section-title reveal">Contact</h2>
+
+        <div class="contact-layout">
+          <div class="contact-info reveal">
+            <div class="contact-card">
+              <span class="contact-card-label">Primary Contact · Author</span>
+              <span class="contact-name">Gaurab Baral</span>
+              <span class="contact-affil"
+                >School of Computing and Analytics<br />Northern Kentucky
+                University<br />Highland Heights, Kentucky 41076</span
+              >
+              <a href="mailto:baralg1@nku.edu" class="contact-email">
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path
+                    d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"
+                  />
+                  <polyline points="22,6 12,13 2,6" />
+                </svg>
+                baralg1@nku.edu
+              </a>
+            </div>
+
+            <div class="contact-card">
+              <span class="contact-card-label">Co-Author</span>
+              <span class="contact-name">Junxiu Zhou</span>
+              <span class="contact-affil"
+                >School of Computing and Analytics<br />Northern Kentucky
+                University<br />Highland Heights, Kentucky 41076</span
+              >
+              <a href="mailto:zhouj2@nku.edu" class="contact-email">
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path
+                    d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"
+                  />
+                  <polyline points="22,6 12,13 2,6" />
+                </svg>
+                zhouj2@nku.edu
+              </a>
+            </div>
+          </div>
+
+          <div class="contact-text reveal">
+            <p style="margin-bottom: 1.25rem">
+              For questions about the dataset, access requests, or collaboration
+              inquiries, please reach out by email. We welcome feedback from the
+              research community.
+            </p>
+            <p style="margin-bottom: 1.25rem">
+              If you use AutoFormBench in your research, please cite our work
+              and link back to this page.
+            </p>
+            <p style="margin-bottom: 1.25rem">
+              The dataset and source code are hosted on GitHub at
+              <a
+                href="https://github.com/TempGaurab/Detect_Regions_in_PDF"
+                target="_blank"
+                >github.com/TempGaurab/Detect_Regions_in_PDF</a
+              >.
+            </p>
+            <p style="font-size: 0.88rem; color: var(--muted)">
+              Northern Kentucky University · Highland Heights, KY 41076 · United
+              States
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer>
+      <span
+        >© 2024 Gaurab Baral &amp; Junxiu Zhou — Northern Kentucky
+        University</span
+      >
+      <span
+        >AutoFormBench · Non-commercial research use only ·
+        <a href="#license">License</a></span
+      >
+    </footer>
+
+    <script>
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((e) => {
+            if (e.isIntersecting) {
+              e.target.classList.add("visible");
+            }
+          });
+        },
+        { threshold: 0.12 }
+      );
+      document
+        .querySelectorAll(".reveal")
+        .forEach((el) => observer.observe(el));
+    </script>
+  </body>
+</html>
