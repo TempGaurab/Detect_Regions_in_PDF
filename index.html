@@ -29,6 +29,9 @@
         --mono: "DM Mono", monospace;
         --serif: "DM Serif Display", serif;
         --sans: "Instrument Sans", sans-serif;
+        --cb: #378add;
+        --ln: #1d9e75;
+        --bx: #d4537e;
       }
 
       html {
@@ -60,7 +63,6 @@
         backdrop-filter: blur(12px);
         border-bottom: 1px solid var(--border);
       }
-
       .nav-logo {
         font-family: var(--mono);
         font-size: 13px;
@@ -70,13 +72,11 @@
         text-transform: uppercase;
         text-decoration: none;
       }
-
       .nav-links {
         display: flex;
         gap: 2.5rem;
         list-style: none;
       }
-
       .nav-links a {
         font-family: var(--mono);
         font-size: 12px;
@@ -87,7 +87,6 @@
         text-decoration: none;
         transition: color 0.2s;
       }
-
       .nav-links a:hover {
         color: var(--accent);
       }
@@ -102,7 +101,6 @@
         position: relative;
         overflow: hidden;
       }
-
       .hero-grid {
         position: absolute;
         inset: 0;
@@ -111,7 +109,6 @@
         background-size: 60px 60px;
         opacity: 0.5;
       }
-
       .hero-accent-line {
         position: absolute;
         top: 0;
@@ -122,9 +119,24 @@
         opacity: 0.15;
       }
 
-      .hero-content {
+      /* TWO-COLUMN HERO */
+      .hero-row {
         position: relative;
-        max-width: 860px;
+        display: flex;
+        align-items: center;
+        gap: 4rem;
+        max-width: 1200px;
+      }
+      .hero-content {
+        flex: 0 0 auto;
+        max-width: 520px;
+      }
+      .hero-visual {
+        flex: 1 1 auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 0;
       }
 
       .hero-tag {
@@ -140,7 +152,6 @@
         margin-bottom: 2rem;
         animation: fadeUp 0.6s ease both;
       }
-
       h1.hero-title {
         font-family: var(--serif);
         font-size: clamp(3rem, 7vw, 5.5rem);
@@ -150,12 +161,10 @@
         margin-bottom: 1.5rem;
         animation: fadeUp 0.7s 0.1s ease both;
       }
-
       h1.hero-title em {
         font-style: italic;
         color: var(--accent);
       }
-
       .hero-sub {
         font-size: 1.05rem;
         color: var(--muted);
@@ -163,26 +172,22 @@
         margin-bottom: 2.5rem;
         animation: fadeUp 0.7s 0.2s ease both;
       }
-
       .hero-stats {
         display: flex;
         gap: 3rem;
         margin-bottom: 2.5rem;
         animation: fadeUp 0.7s 0.3s ease both;
       }
-
       .stat {
         display: flex;
         flex-direction: column;
       }
-
       .stat-num {
         font-family: var(--serif);
         font-size: 2.2rem;
         color: var(--ink);
         line-height: 1;
       }
-
       .stat-label {
         font-family: var(--mono);
         font-size: 11px;
@@ -191,14 +196,12 @@
         text-transform: uppercase;
         margin-top: 4px;
       }
-
       .hero-actions {
         display: flex;
         gap: 1rem;
         flex-wrap: wrap;
         animation: fadeUp 0.7s 0.4s ease both;
       }
-
       .btn-primary {
         display: inline-flex;
         align-items: center;
@@ -214,12 +217,10 @@
         text-decoration: none;
         transition: background 0.2s, transform 0.15s;
       }
-
       .btn-primary:hover {
         background: var(--accent-2);
         transform: translateY(-1px);
       }
-
       .btn-secondary {
         display: inline-flex;
         align-items: center;
@@ -236,10 +237,325 @@
         text-decoration: none;
         transition: border-color 0.2s, transform 0.15s;
       }
-
       .btn-secondary:hover {
         border-color: var(--ink);
         transform: translateY(-1px);
+      }
+
+      /* ══════════════════════════════════════
+         ANIMATED FORM DETECTION VISUAL
+      ══════════════════════════════════════ */
+      .form-viz-wrap {
+        animation: fadeUp 0.8s 0.5s ease both;
+        width: 100%;
+        max-width: 420px;
+        position: relative;
+      }
+
+      .form-viz-label {
+        font-family: var(--mono);
+        font-size: 10px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .form-viz-label::before {
+        content: "";
+        display: inline-block;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--accent);
+        animation: blink 1.4s ease-in-out infinite;
+      }
+
+      .form-doc {
+        background: #fff;
+        border: 1px solid var(--border);
+        box-shadow: 4px 4px 0 0 var(--border), 8px 8px 0 0 rgba(0, 0, 0, 0.04);
+        padding: 20px 22px;
+        position: relative;
+        font-family: var(--mono);
+      }
+
+      /* fake doc header */
+      .fdoc-header {
+        border-bottom: 1.5px solid #e0ddd6;
+        padding-bottom: 12px;
+        margin-bottom: 14px;
+      }
+      .fdoc-title-line {
+        height: 9px;
+        background: #d8d4cc;
+        border-radius: 1px;
+        margin-bottom: 5px;
+      }
+      .fdoc-title-line.w60 {
+        width: 60%;
+      }
+      .fdoc-title-line.w40 {
+        width: 40%;
+        height: 7px;
+        background: #e5e2da;
+      }
+
+      /* form rows */
+      .fdoc-row {
+        margin-bottom: 11px;
+        position: relative;
+      }
+      .fdoc-field-label {
+        height: 6px;
+        width: 30%;
+        background: #ebe8e0;
+        border-radius: 1px;
+        margin-bottom: 5px;
+      }
+      .fdoc-line-field {
+        height: 1.5px;
+        background: #c8c4bc;
+        width: 100%;
+        position: relative;
+        margin-top: 6px;
+      }
+      .fdoc-box-field {
+        height: 22px;
+        border: 1.5px solid #c8c4bc;
+        width: 100%;
+        position: relative;
+      }
+      .fdoc-checkbox-row {
+        display: flex;
+        gap: 14px;
+        align-items: center;
+        margin-bottom: 11px;
+      }
+      .fdoc-cb-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .fdoc-cb {
+        width: 13px;
+        height: 13px;
+        border: 1.5px solid #c8c4bc;
+        flex-shrink: 0;
+        position: relative;
+      }
+      .fdoc-cb-label {
+        height: 6px;
+        width: 38px;
+        background: #ebe8e0;
+        border-radius: 1px;
+      }
+
+      .fdoc-two-col {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-bottom: 11px;
+      }
+
+      /* ── DETECTION BOXES (overlaid) ── */
+      .det-box {
+        position: absolute;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.25s;
+      }
+      .det-box.visible {
+        opacity: 1;
+      }
+
+      /* checkbox detection */
+      .det-cb {
+        border: 1.5px solid var(--cb);
+        box-shadow: 0 0 0 1px rgba(55, 138, 221, 0.15) inset;
+      }
+      /* line detection */
+      .det-ln {
+        border: 1.5px solid var(--ln);
+        box-shadow: 0 0 0 1px rgba(29, 158, 117, 0.12) inset;
+      }
+      /* box detection */
+      .det-bx {
+        border: 1.5px solid var(--bx);
+        box-shadow: 0 0 0 1px rgba(212, 83, 126, 0.12) inset;
+      }
+
+      /* corner tick marks */
+      .det-box::before,
+      .det-box::after {
+        content: "";
+        position: absolute;
+        width: 5px;
+        height: 5px;
+      }
+      .det-cb::before {
+        top: -3px;
+        left: -3px;
+        border-top: 2px solid var(--cb);
+        border-left: 2px solid var(--cb);
+      }
+      .det-cb::after {
+        bottom: -3px;
+        right: -3px;
+        border-bottom: 2px solid var(--cb);
+        border-right: 2px solid var(--cb);
+      }
+      .det-ln::before {
+        top: -3px;
+        left: -3px;
+        border-top: 2px solid var(--ln);
+        border-left: 2px solid var(--ln);
+      }
+      .det-ln::after {
+        bottom: -3px;
+        right: -3px;
+        border-bottom: 2px solid var(--ln);
+        border-right: 2px solid var(--ln);
+      }
+      .det-bx::before {
+        top: -3px;
+        left: -3px;
+        border-top: 2px solid var(--bx);
+        border-left: 2px solid var(--bx);
+      }
+      .det-bx::after {
+        bottom: -3px;
+        right: -3px;
+        border-bottom: 2px solid var(--bx);
+        border-right: 2px solid var(--bx);
+      }
+
+      /* label badge */
+      .det-badge {
+        position: absolute;
+        top: -18px;
+        left: 0;
+        font-family: var(--mono);
+        font-size: 9px;
+        font-weight: 500;
+        letter-spacing: 0.06em;
+        padding: 1px 5px;
+        white-space: nowrap;
+        opacity: 0;
+        transition: opacity 0.25s 0.1s;
+      }
+      .det-box.visible .det-badge {
+        opacity: 1;
+      }
+      .det-cb .det-badge {
+        background: var(--cb);
+        color: #fff;
+      }
+      .det-ln .det-badge {
+        background: var(--ln);
+        color: #fff;
+      }
+      .det-bx .det-badge {
+        background: var(--bx);
+        color: #fff;
+      }
+
+      /* scan line */
+      .scan-line {
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(200, 75, 47, 0.5),
+          transparent
+        );
+        top: 0;
+        pointer-events: none;
+        opacity: 0;
+        z-index: 10;
+      }
+      .scan-line.active {
+        opacity: 1;
+        animation: scanDown 1.8s linear forwards;
+      }
+
+      /* legend */
+      .form-legend {
+        display: flex;
+        gap: 16px;
+        margin-top: 12px;
+        flex-wrap: wrap;
+      }
+      .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-family: var(--mono);
+        font-size: 10px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      .legend-dot {
+        width: 8px;
+        height: 8px;
+        flex-shrink: 0;
+        border-radius: 1px;
+      }
+
+      /* confidence chip */
+      .conf-chip {
+        position: absolute;
+        right: 0;
+        bottom: -22px;
+        font-family: var(--mono);
+        font-size: 9px;
+        letter-spacing: 0.05em;
+        color: var(--muted);
+        opacity: 0;
+        transition: opacity 0.3s 0.2s;
+        white-space: nowrap;
+      }
+      .det-box.visible .conf-chip {
+        opacity: 1;
+      }
+
+      @keyframes fadeUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      @keyframes blink {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.3;
+        }
+      }
+      @keyframes scanDown {
+        0% {
+          top: 0%;
+          opacity: 1;
+        }
+        90% {
+          opacity: 1;
+        }
+        100% {
+          top: 100%;
+          opacity: 0;
+        }
       }
 
       /* ── SECTION COMMON ── */
@@ -247,12 +563,10 @@
         padding: 6rem 3rem;
         border-top: 1px solid var(--border);
       }
-
       .section-inner {
         max-width: 960px;
         margin: 0 auto;
       }
-
       .section-tag {
         font-family: var(--mono);
         font-size: 11px;
@@ -262,7 +576,6 @@
         color: var(--accent);
         margin-bottom: 1rem;
       }
-
       h2.section-title {
         font-family: var(--serif);
         font-size: clamp(2rem, 4vw, 3rem);
@@ -278,19 +591,16 @@
         gap: 4rem;
         margin-top: 3rem;
       }
-
       .desc-body p {
         color: #3a3832;
         margin-bottom: 1.1rem;
         font-size: 0.97rem;
       }
-
       .desc-sidebar {
         display: flex;
         flex-direction: column;
         gap: 1px;
       }
-
       .fact-card {
         background: var(--paper-2);
         border: 1px solid var(--border);
@@ -299,7 +609,6 @@
         flex-direction: column;
         gap: 4px;
       }
-
       .fact-label {
         font-family: var(--mono);
         font-size: 10px;
@@ -307,20 +616,17 @@
         text-transform: uppercase;
         color: var(--muted);
       }
-
       .fact-value {
         font-family: var(--serif);
         font-size: 1.3rem;
         color: var(--ink);
       }
-
       .classes-row {
         display: flex;
         gap: 1rem;
         margin-top: 2.5rem;
         flex-wrap: wrap;
       }
-
       .class-pill {
         display: flex;
         align-items: center;
@@ -331,14 +637,12 @@
         flex: 1;
         min-width: 160px;
       }
-
       .class-dot {
         width: 10px;
         height: 10px;
         border-radius: 50%;
         flex-shrink: 0;
       }
-
       .class-name {
         font-family: var(--mono);
         font-size: 13px;
@@ -357,7 +661,6 @@
         margin-top: 2rem;
         font-size: 13px;
       }
-
       .results-table th {
         font-family: var(--mono);
         font-size: 10px;
@@ -368,13 +671,11 @@
         text-align: left;
         border-bottom: 2px solid var(--border);
       }
-
       .results-table td {
         padding: 9px 12px;
         border-bottom: 1px solid var(--border);
         color: #3a3832;
       }
-
       .results-table tr.model-row td {
         font-weight: 600;
         background: var(--paper-2);
@@ -399,7 +700,6 @@
       #download h2.section-title {
         color: var(--paper);
       }
-
       .download-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -408,7 +708,6 @@
         background: #2a2822;
         border: 1px solid #2a2822;
       }
-
       .dl-card {
         background: #1a1916;
         padding: 2rem;
@@ -417,11 +716,9 @@
         gap: 0.75rem;
         transition: background 0.2s;
       }
-
       .dl-card:hover {
         background: #222018;
       }
-
       .dl-icon {
         width: 40px;
         height: 40px;
@@ -431,25 +728,21 @@
         justify-content: center;
         margin-bottom: 0.5rem;
       }
-
       .dl-icon svg {
         width: 18px;
         height: 18px;
         fill: var(--accent-2);
       }
-
       .dl-title {
         font-family: var(--serif);
         font-size: 1.2rem;
         color: var(--paper);
       }
-
       .dl-desc {
         font-size: 13px;
         color: #7a7469;
         line-height: 1.6;
       }
-
       .dl-link {
         display: inline-flex;
         align-items: center;
@@ -465,11 +758,9 @@
         border-top: 1px solid #2a2822;
         transition: color 0.2s;
       }
-
       .dl-link:hover {
         color: #fff;
       }
-
       .dl-note {
         margin-top: 2.5rem;
         padding: 1.25rem 1.5rem;
@@ -487,7 +778,6 @@
         padding: 2.5rem;
         margin-top: 2rem;
       }
-
       .license-block h3 {
         font-family: var(--serif);
         font-size: 1.4rem;
@@ -496,31 +786,26 @@
         padding-bottom: 1rem;
         border-bottom: 1px solid var(--border);
       }
-
       .license-block p {
         font-size: 0.9rem;
         color: #5a5852;
         margin-bottom: 1rem;
         line-height: 1.75;
       }
-
       .license-block p strong {
         color: var(--ink);
         font-weight: 600;
       }
-
       .license-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 2rem;
         margin-top: 2rem;
       }
-
       .license-item {
         border-left: 2px solid var(--border);
         padding-left: 1.25rem;
       }
-
       .license-item h4 {
         font-family: var(--mono);
         font-size: 11px;
@@ -529,13 +814,11 @@
         color: var(--accent);
         margin-bottom: 0.5rem;
       }
-
       .license-item p {
         font-size: 0.88rem;
         color: #5a5852;
         margin: 0;
       }
-
       .age-banner {
         margin-top: 2rem;
         background: var(--accent);
@@ -554,13 +837,11 @@
         margin-top: 2.5rem;
         align-items: start;
       }
-
       .contact-info {
         display: flex;
         flex-direction: column;
         gap: 1.5rem;
       }
-
       .contact-card {
         border: 1px solid var(--border);
         padding: 1.75rem;
@@ -568,7 +849,6 @@
         flex-direction: column;
         gap: 0.5rem;
       }
-
       .contact-card-label {
         font-family: var(--mono);
         font-size: 10px;
@@ -576,18 +856,15 @@
         text-transform: uppercase;
         color: var(--muted);
       }
-
       .contact-name {
         font-family: var(--serif);
         font-size: 1.4rem;
         color: var(--ink);
       }
-
       .contact-affil {
         font-size: 0.88rem;
         color: var(--muted);
       }
-
       .contact-email {
         display: inline-flex;
         align-items: center;
@@ -599,11 +876,9 @@
         margin-top: 0.5rem;
         transition: color 0.2s;
       }
-
       .contact-email:hover {
         color: var(--accent-2);
       }
-
       .contact-text {
         font-size: 0.97rem;
         color: #4a4840;
@@ -631,7 +906,6 @@
         gap: 1rem;
         flex-wrap: wrap;
       }
-
       footer a {
         color: var(--accent-2);
         text-decoration: none;
@@ -640,18 +914,7 @@
         color: #fff;
       }
 
-      /* ── ANIMATIONS ── */
-      @keyframes fadeUp {
-        from {
-          opacity: 0;
-          transform: translateY(20px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      }
-
+      /* ── REVEAL ── */
       .reveal {
         opacity: 0;
         transform: translateY(24px);
@@ -663,6 +926,15 @@
       }
 
       /* ── RESPONSIVE ── */
+      @media (max-width: 900px) {
+        .hero-row {
+          flex-direction: column;
+          gap: 3rem;
+        }
+        .form-viz-wrap {
+          max-width: 380px;
+        }
+      }
       @media (max-width: 768px) {
         nav {
           padding: 0 1.5rem;
@@ -714,45 +986,215 @@
     <section id="home" style="border-top: none">
       <div class="hero-grid"></div>
       <div class="hero-accent-line"></div>
-      <div class="hero-content">
-        <div class="hero-tag">Benchmark Dataset · NLP · Computer Vision</div>
-        <h1 class="hero-title">Auto<em>Form</em><br />Bench</h1>
-        <p class="hero-sub">
-          A benchmark dataset for automating form understanding — localizing and
-          classifying fillable form elements across diverse real-world document
-          types using YOLO-based object detection.
-        </p>
-        <div class="hero-stats">
-          <div class="stat">
-            <span class="stat-num">407</span>
-            <span class="stat-label">Annotated forms</span>
+
+      <div class="hero-row">
+        <!-- LEFT: text -->
+        <div class="hero-content">
+          <div class="hero-tag">Benchmark Dataset · NLP · Computer Vision</div>
+          <h1 class="hero-title">Auto<em>Form</em><br />Bench</h1>
+          <p class="hero-sub">
+            A benchmark dataset for automating form understanding — localizing
+            and classifying fillable form elements across diverse real-world
+            document types using YOLO-based object detection.
+          </p>
+          <div class="hero-stats">
+            <div class="stat">
+              <span class="stat-num">407</span>
+              <span class="stat-label">Annotated forms</span>
+            </div>
+            <div class="stat">
+              <span class="stat-num">3</span>
+              <span class="stat-label">Element classes</span>
+            </div>
+            <div class="stat">
+              <span class="stat-num">300</span>
+              <span class="stat-label">DPI resolution</span>
+            </div>
           </div>
-          <div class="stat">
-            <span class="stat-num">3</span>
-            <span class="stat-label">Element classes</span>
-          </div>
-          <div class="stat">
-            <span class="stat-num">300</span>
-            <span class="stat-label">DPI resolution</span>
+          <div class="hero-actions">
+            <a href="#download" class="btn-primary">
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+              Download Dataset
+            </a>
+            <a href="#description" class="btn-secondary">Learn more →</a>
           </div>
         </div>
-        <div class="hero-actions">
-          <a href="#download" class="btn-primary">
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2.5"
-            >
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-              <polyline points="7 10 12 15 17 10" />
-              <line x1="12" y1="15" x2="12" y2="3" />
-            </svg>
-            Download Dataset
-          </a>
-          <a href="#description" class="btn-secondary">Learn more →</a>
+
+        <!-- RIGHT: animated form detection visual -->
+        <div class="hero-visual">
+          <div class="form-viz-wrap">
+            <div class="form-viz-label">Live detection preview</div>
+
+            <div class="form-doc" id="formDoc">
+              <div class="scan-line" id="scanLine"></div>
+
+              <!-- fake form header -->
+              <div class="fdoc-header">
+                <div class="fdoc-title-line w60"></div>
+                <div class="fdoc-title-line w40"></div>
+              </div>
+
+              <!-- Row 1: two line fields -->
+              <div class="fdoc-two-col">
+                <div class="fdoc-row">
+                  <div class="fdoc-field-label"></div>
+                  <div class="fdoc-line-field" id="lf1">
+                    <div
+                      class="det-box det-ln"
+                      id="d-ln1"
+                      style="inset: -6px -3px -6px -3px"
+                    >
+                      <span class="det-badge">line</span>
+                      <span class="conf-chip">0.91</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="fdoc-row">
+                  <div class="fdoc-field-label" style="width: 45%"></div>
+                  <div class="fdoc-line-field" id="lf2">
+                    <div
+                      class="det-box det-ln"
+                      id="d-ln2"
+                      style="inset: -6px -3px -6px -3px"
+                    >
+                      <span class="det-badge">line</span>
+                      <span class="conf-chip">0.88</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Row 2: box field -->
+              <div class="fdoc-row">
+                <div class="fdoc-field-label" style="width: 22%"></div>
+                <div class="fdoc-box-field" id="bf1">
+                  <div
+                    class="det-box det-bx"
+                    id="d-bx1"
+                    style="inset: -4px -3px -4px -3px"
+                  >
+                    <span class="det-badge">box</span>
+                    <span class="conf-chip">0.94</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Row 3: checkboxes -->
+              <div class="fdoc-checkbox-row">
+                <div class="fdoc-cb-item">
+                  <div class="fdoc-cb" id="cb1">
+                    <div
+                      class="det-box det-cb"
+                      id="d-cb1"
+                      style="inset: -5px -5px -5px -5px"
+                    >
+                      <span class="det-badge">checkbox</span>
+                      <span class="conf-chip">0.97</span>
+                    </div>
+                  </div>
+                  <div class="fdoc-cb-label"></div>
+                </div>
+                <div class="fdoc-cb-item">
+                  <div class="fdoc-cb" id="cb2">
+                    <div
+                      class="det-box det-cb"
+                      id="d-cb2"
+                      style="inset: -5px -5px -5px -5px"
+                    >
+                      <span class="det-badge">checkbox</span>
+                      <span class="conf-chip">0.96</span>
+                    </div>
+                  </div>
+                  <div class="fdoc-cb-label"></div>
+                </div>
+                <div class="fdoc-cb-item">
+                  <div class="fdoc-cb" id="cb3">
+                    <div
+                      class="det-box det-cb"
+                      id="d-cb3"
+                      style="inset: -5px -5px -5px -5px"
+                    >
+                      <span class="det-badge">checkbox</span>
+                      <span class="conf-chip">0.95</span>
+                    </div>
+                  </div>
+                  <div class="fdoc-cb-label"></div>
+                </div>
+              </div>
+
+              <!-- Row 4: two boxes -->
+              <div class="fdoc-two-col">
+                <div class="fdoc-row">
+                  <div class="fdoc-field-label" style="width: 50%"></div>
+                  <div class="fdoc-box-field" id="bf2">
+                    <div
+                      class="det-box det-bx"
+                      id="d-bx2"
+                      style="inset: -4px -3px -4px -3px"
+                    >
+                      <span class="det-badge">box</span>
+                      <span class="conf-chip">0.89</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="fdoc-row">
+                  <div class="fdoc-field-label" style="width: 35%"></div>
+                  <div class="fdoc-box-field" id="bf3">
+                    <div
+                      class="det-box det-bx"
+                      id="d-bx3"
+                      style="inset: -4px -3px -4px -3px"
+                    >
+                      <span class="det-badge">box</span>
+                      <span class="conf-chip">0.92</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Row 5: full-width line -->
+              <div class="fdoc-row" style="margin-bottom: 0">
+                <div class="fdoc-field-label" style="width: 28%"></div>
+                <div class="fdoc-line-field" id="lf3">
+                  <div
+                    class="det-box det-ln"
+                    id="d-ln3"
+                    style="inset: -6px -3px -6px -3px"
+                  >
+                    <span class="det-badge">line</span>
+                    <span class="conf-chip">0.87</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- legend -->
+            <div class="form-legend">
+              <div class="legend-item">
+                <div class="legend-dot" style="background: var(--cb)"></div>
+                Checkbox
+              </div>
+              <div class="legend-item">
+                <div class="legend-dot" style="background: var(--ln)"></div>
+                Line
+              </div>
+              <div class="legend-item">
+                <div class="legend-dot" style="background: var(--bx)"></div>
+                Box
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -762,7 +1204,6 @@
       <div class="section-inner">
         <div class="section-tag reveal">Overview</div>
         <h2 class="section-title reveal">What is AutoFormBench?</h2>
-
         <div class="desc-grid">
           <div class="desc-body reveal">
             <p>
@@ -799,7 +1240,6 @@
               reflecting the practical requirements of downstream form-filling
               automation.
             </p>
-
             <div class="classes-row">
               <div class="class-pill">
                 <div class="class-dot" style="background: #378add"></div>
@@ -824,38 +1264,36 @@
               </div>
             </div>
           </div>
-
           <div class="desc-sidebar reveal">
             <div class="fact-card">
-              <span class="fact-label">Source documents</span>
-              <span class="fact-value">506 PDFs curated</span>
+              <span class="fact-label">Source documents</span
+              ><span class="fact-value">506 PDFs curated</span>
             </div>
             <div class="fact-card">
-              <span class="fact-label">After filtering empty docs</span>
-              <span class="fact-value">407 annotated forms</span>
+              <span class="fact-label">After filtering empty docs</span
+              ><span class="fact-value">407 annotated forms</span>
             </div>
             <div class="fact-card">
-              <span class="fact-label">Domains covered</span>
-              <span class="fact-value">Government · Health · Enterprise</span>
+              <span class="fact-label">Domains covered</span
+              ><span class="fact-value">Government · Health · Enterprise</span>
             </div>
             <div class="fact-card">
-              <span class="fact-label">Train / Val / Test split</span>
-              <span class="fact-value">70% / 15% / 15%</span>
+              <span class="fact-label">Train / Val / Test split</span
+              ><span class="fact-value">70% / 15% / 15%</span>
             </div>
             <div class="fact-card">
-              <span class="fact-label">Ground truth format</span>
-              <span class="fact-value">Structured JSON</span>
+              <span class="fact-label">Ground truth format</span
+              ><span class="fact-value">Structured JSON</span>
             </div>
             <div class="fact-card">
-              <span class="fact-label">Best model (F1 @ 20% tol.)</span>
-              <span class="fact-value" style="color: var(--accent)"
+              <span class="fact-label">Best model (F1 @ 20% tol.)</span
+              ><span class="fact-value" style="color: var(--accent)"
                 >YOLOv11 0.827 / 0.836 / 0.760</span
               >
             </div>
           </div>
         </div>
 
-        <!-- Results summary table -->
         <div style="margin-top: 4rem" class="reveal">
           <div class="section-tag">Best results · Tolerance 20%</div>
           <table class="results-table">
@@ -897,7 +1335,6 @@
                 <td>0.474</td>
                 <td>0.311</td>
               </tr>
-
               <tr class="model-row">
                 <td colspan="6">Advanced OpenCV</td>
               </tr>
@@ -925,7 +1362,6 @@
                 <td>0.520</td>
                 <td>0.351</td>
               </tr>
-
               <tr class="model-row highlight">
                 <td colspan="6">YOLOv11 — Best overall</td>
               </tr>
@@ -953,7 +1389,6 @@
                 <td class="best">0.760</td>
                 <td class="best">0.613</td>
               </tr>
-
               <tr class="model-row">
                 <td colspan="6">YOLOv26-s</td>
               </tr>
@@ -981,7 +1416,6 @@
                 <td>0.724</td>
                 <td>0.567</td>
               </tr>
-
               <tr class="model-row">
                 <td colspan="6">YOLOv26-l</td>
               </tr>
@@ -1025,7 +1459,6 @@
           educational use. By downloading, you agree to the terms outlined in
           the License section.
         </p>
-
         <div class="download-grid reveal">
           <div class="dl-card">
             <div class="dl-icon">
@@ -1046,11 +1479,9 @@
               href="https://github.com/TempGaurab/Detect_Regions_in_PDF/tree/main/dataset"
               class="dl-link"
               target="_blank"
+              >Download from GitHub →</a
             >
-              Download from GitHub →
-            </a>
           </div>
-
           <div class="dl-card">
             <div class="dl-icon">
               <svg viewBox="0 0 24 24">
@@ -1068,11 +1499,9 @@
               href="https://github.com/TempGaurab/Detect_Regions_in_PDF"
               class="dl-link"
               target="_blank"
+              >View on GitHub →</a
             >
-              View on GitHub →
-            </a>
           </div>
-
           <div class="dl-card">
             <div class="dl-icon">
               <svg viewBox="0 0 24 24">
@@ -1090,10 +1519,9 @@
               AutoFormBench: Benchmark Dataset for Automating Form
               Understanding. Baral & Zhou, Northern Kentucky University, 2024.
             </div>
-            <a href="#contact" class="dl-link"> Contact for preprint → </a>
+            <a href="#contact" class="dl-link">Contact for preprint →</a>
           </div>
         </div>
-
         <div class="dl-note reveal">
           ⚠ &nbsp;Access is restricted to users 18 years of age or older. The
           dataset is provided solely for non-commercial, research, and
@@ -1107,10 +1535,8 @@
       <div class="section-inner">
         <div class="section-tag reveal">Terms of Use</div>
         <h2 class="section-title reveal">License</h2>
-
         <div class="license-block reveal">
           <h3>AutoFormBench Dataset License</h3>
-
           <p>
             <strong
               >BY DOWNLOADING, COPYING, OR ACCESSING THE DATASET, YOU
@@ -1122,7 +1548,6 @@
             do not agree to these terms, do not download, install, copy, access,
             or use the dataset.
           </p>
-
           <div class="license-grid">
             <div class="license-item">
               <h4>§1 — Permitted Use</h4>
@@ -1179,7 +1604,6 @@
               </p>
             </div>
           </div>
-
           <div class="age-banner">
             ✦ &nbsp; ACCESS TO AUTOFORMBENCH IS NOT AVAILABLE TO ANYONE UNDER
             THE AGE OF EIGHTEEN (18).
@@ -1193,7 +1617,6 @@
       <div class="section-inner">
         <div class="section-tag reveal">Get in Touch</div>
         <h2 class="section-title reveal">Contact</h2>
-
         <div class="contact-layout">
           <div class="contact-info reveal">
             <div class="contact-card">
@@ -1203,7 +1626,10 @@
                 >School of Computing and Analytics<br />Northern Kentucky
                 University<br />Highland Heights, Kentucky 41076</span
               >
-              <a href="mailto:baralg1@nku.edu" class="contact-email">
+              <a
+                href="/cdn-cgi/l/email-protection#d7b5b6a5b6bbb0e697b9bca2f9b2b3a2"
+                class="contact-email"
+              >
                 <svg
                   width="14"
                   height="14"
@@ -1217,10 +1643,13 @@
                   />
                   <polyline points="22,6 12,13 2,6" />
                 </svg>
-                baralg1@nku.edu
+                <span
+                  class="__cf_email__"
+                  data-cfemail="81e3e0f3e0ede6b0c1efeaf4afe4e5f4"
+                  >[email&#160;protected]</span
+                >
               </a>
             </div>
-
             <div class="contact-card">
               <span class="contact-card-label">Co-Author</span>
               <span class="contact-name">Junxiu Zhou</span>
@@ -1228,7 +1657,10 @@
                 >School of Computing and Analytics<br />Northern Kentucky
                 University<br />Highland Heights, Kentucky 41076</span
               >
-              <a href="mailto:zhouj2@nku.edu" class="contact-email">
+              <a
+                href="/cdn-cgi/l/email-protection#12687a7d677820527c79673c777667"
+                class="contact-email"
+              >
                 <svg
                   width="14"
                   height="14"
@@ -1242,11 +1674,14 @@
                   />
                   <polyline points="22,6 12,13 2,6" />
                 </svg>
-                zhouj2@nku.edu
+                <span
+                  class="__cf_email__"
+                  data-cfemail="4f3527203a257d0f21243a612a2b3a"
+                  >[email&#160;protected]</span
+                >
               </a>
             </div>
           </div>
-
           <div class="contact-text reveal">
             <p style="margin-bottom: 1.25rem">
               For questions about the dataset, access requests, or collaboration
@@ -1286,20 +1721,72 @@
       >
     </footer>
 
+    <script
+      data-cfasync="false"
+      src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"
+    ></script>
     <script>
+      // Scroll reveal
       const observer = new IntersectionObserver(
-        (entries) => {
+        (entries) =>
           entries.forEach((e) => {
-            if (e.isIntersecting) {
-              e.target.classList.add("visible");
-            }
-          });
-        },
+            if (e.isIntersecting) e.target.classList.add("visible");
+          }),
         { threshold: 0.12 }
       );
       document
         .querySelectorAll(".reveal")
         .forEach((el) => observer.observe(el));
+
+      // ── ANIMATED DETECTION SEQUENCE ──
+      const detBoxIds = [
+        "d-ln1",
+        "d-ln2",
+        "d-bx1",
+        "d-cb1",
+        "d-cb2",
+        "d-cb3",
+        "d-bx2",
+        "d-bx3",
+        "d-ln3",
+      ];
+
+      function hideAll() {
+        detBoxIds.forEach((id) =>
+          document.getElementById(id).classList.remove("visible")
+        );
+      }
+
+      function runDetection() {
+        hideAll();
+
+        // fire scan line
+        const scan = document.getElementById("scanLine");
+        scan.classList.remove("active");
+        void scan.offsetWidth; // reflow
+        scan.classList.add("active");
+
+        // stagger each detection box appearing
+        const delays = [400, 550, 700, 900, 1000, 1100, 1300, 1450, 1600, 1750];
+        detBoxIds.forEach((id, i) => {
+          setTimeout(() => {
+            const box = document.getElementById(id);
+            if (box) box.classList.add("visible");
+          }, delays[i]);
+        });
+
+        // repeat after scan completes + short pause
+        setTimeout(() => {
+          runDetection();
+        }, 2900);
+      }
+
+      // start animation after load, plus slight delay for page rhythm
+      window.addEventListener("load", () => {
+        setTimeout(() => {
+          runDetection();
+        }, 800);
+      });
     </script>
   </body>
 </html>
